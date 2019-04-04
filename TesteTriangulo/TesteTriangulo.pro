@@ -36,4 +36,4 @@ FORMS += \
         mainwindow.ui
 
 #Para utilizar glPointSize:
-LIBS += -lopengl32 -lglu32
+#LIBS += -lopengl32 -lglu32

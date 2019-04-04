@@ -30,7 +30,7 @@ Render::Render(QWidget* parent)
     :QOpenGLWidget(parent)
 {
     _points.push_back(QVector3D(-0.5,0,0));
-    _points.push_back(QVector3D(0,0.75,0));
+    _points.push_back(QVector3D(0,0.5,0));
     _points.push_back(QVector3D(0.5,0,0));
 
 }
@@ -48,7 +48,7 @@ void Render::initializeGL()
     glEnable(GL_POINT_SMOOTH);
     glEnable( GL_LINE_SMOOTH );
     glLineWidth(1.0f);
-    glPointSize(8.0f);
+    //glPointSize(8.0f);
 
     _program = new QOpenGLShaderProgram();
 

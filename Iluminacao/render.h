@@ -6,6 +6,7 @@
 #include<QOpenGLWidget>
 #include<QOpenGLShaderProgram>
 #include<QOpenGLBuffer>
+#include<QOpenGLVertexArrayObject>
 
 class Render:
         public QOpenGLWidget
@@ -26,8 +27,25 @@ private:
     std::vector<int> _indices; //vetor com os indices que formam os triângulos que serão renderizados
     std::vector<QVector3D> _colors;
 
-    QOpenGLBuffer _pointsBuffer;
-    QOpenGLBuffer _colorsBuffer;
+   unsigned int _pointsBuffer = static_cast<unsigned int>(-1);
+   unsigned int _normalsBuffer = static_cast<unsigned int>(-1);
+   unsigned int _meshBuffer = static_cast<unsigned int>(-1);
+
+   struct Camera {
+      QVector3D eye;      /* posicao do olho ou centro de projecao conica */
+      QVector3D at;       /* ponto para onde a camera aponta              */
+      QVector3D up;       /* orientacao da direcao "para cima" da camera  */
+      float fovy;         /* angulo de abertura da camera                 */
+      float zNear,zFar;   /* distancia do plano proximo e distante        */
+      float width,height; /* largura e altura da janela em pixels         */
+   };
+
+   Camera cam;
+   QMatrix4x4 _model;
+   QMatrix4x4 _view;
+   QMatrix4x4 _proj;
+
+    QOpenGLVertexArrayObject _vao;
 
 private:
     void createVAO();
