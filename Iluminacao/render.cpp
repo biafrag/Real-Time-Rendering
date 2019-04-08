@@ -9,7 +9,7 @@ const char* vertexShaderSource = R"(
     //Coordenadas de textura
     uniform mat4 mvp;
     uniform mat4 mv;
-    uniform mat4 mv_ti; //inversa transposta da MV
+    uniform mat4 normalMatrix; //inversa transposta da MV
 
     //Posição e normal no espaço da câmera:
     out vec3 fragPos;
@@ -20,7 +20,7 @@ const char* vertexShaderSource = R"(
         gl_Position = mvp * vec4( vertexPos, 1 );
         fragPos = ( mv * vec4( vertexPos, 1 ) ).xyz;
 
-        fragNormal = ( mv_ti * vec4( vertexNormal, 0 ) ).xyz;
+        fragNormal = ( normalMatrix * vec4( vertexNormal, 0 ) ).xyz;
     }
 )";
 
@@ -71,25 +71,13 @@ const char* fragmentShaderSource = R"(
        }
 
        finalColor = ambient + diffuse + specular;
-        //finalColor = color;
     }
 )";
 
 Render::Render(QWidget* parent)
     :QOpenGLWidget(parent)
 {
-    //São 6 pontos em um cubo
-//    _points = {
-//                {-1,1,1}, //1
-//                {1,1,1}, //2
-//                {-1,-1,1}, //3
-//                {1,-1,1}, //4
-//                {-1,-1,-1}, //5
-//                {1,-1,-1},  //6
-//                {-1,-1,-1},
-//                {1,-1,-1}
-//                };
-
+    //São 8 pontos em um cubo
     _points = {
                 {-0.5,0.5,0.5}, //1
                 {0.5,0.5,0.5}, //2
@@ -97,8 +85,8 @@ Render::Render(QWidget* parent)
                 {0.5,-0.5,0.5}, //4
                 {-0.5,0.5,-0.5}, //5
                 {0.5,0.5,-0.5},  //6
-                {-0.5,-0.5,-0.5},
-                {0.5,-0.5,-0.5}
+                {-0.5,-0.5,-0.5},//7
+                {0.5,-0.5,-0.5} //8
                 };
     // 2 triângulos por face, são 6 faces, então 12 triêngulos
     _indices = {
@@ -120,17 +108,20 @@ Render::Render(QWidget* parent)
     _normals.resize(_points.size(), QVector3D(0, 0, 0));
     for (unsigned int t = 0; t < _indices.size() / 3; t++)
     {
-       //get the triangle vertices
+       //Pega vértices do triângulo
        unsigned int v0 = _indices[3 * t + 0];
        unsigned int v1 = _indices[3 * t + 1];
        unsigned int v2 = _indices[3 * t + 2];
 
+       //Faz produto externo para achar normal
        QVector3D n = QVector3D::crossProduct(_points[v1] - _points[v0], _points[v2] - _points[v0]);
+
+       //Os pontos são afetados por 3 normais, por isso o +=
        _normals[v0] += n;
        _normals[v1] += n;
        _normals[v2] += n;
     }
-    //Normalize each normal
+    //Normaliza todas as normais
     for (auto& normal : _normals)
     {
        normal = normal.normalized();
@@ -158,7 +149,6 @@ void Render::initializeGL()
     glEnable(GL_POINT_SMOOTH);
     glEnable( GL_LINE_SMOOTH );
     glLineWidth(1.0f);
-    //glPointSize(8.0f);
 
     _program = new QOpenGLShaderProgram();
 
@@ -188,17 +178,19 @@ void Render::resizeGL(int w, int h)
 
 
 void Render::paintGL()
-{ 
+{
 
+    //Dando bind no programa e no vao
     _program->bind();
-
     _vao.bind();
-    //Definir matriz view e projection
+
+    //Definindo matriz view e projection
      _view.setToIdentity();
      _view.lookAt(cam.eye, cam.at, cam.up);
      _proj.setToIdentity();
      _proj.perspective((cam.fovy*3.14)/180, (float)cam.width/cam.height, cam.zNear, cam.zFar);
      _model.setToIdentity();
+
     //Definindo matrizes para passar para os shaders
     QMatrix4x4 m = _model;
     QMatrix4x4 v = _view;
@@ -207,58 +199,52 @@ void Render::paintGL()
     QMatrix4x4 mv = v*m;
     QMatrix4x4 mvp =p*mv;
 
+    //Passando as variáveis uniformes para os shaders
+    //model-view : Passa para espaço do olho
     _program->setUniformValue("mv", mv);
+    //model-view : Passa para espaço de projeção
     _program->setUniformValue("mvp", mvp);
-    _program->setUniformValue("mv_ti", mv.inverted().transposed());
-
-    //Passar as uniformes da luz e do material
+    //inversa transposta da model-view
+    _program->setUniformValue("normalMatrix", mv.inverted().transposed());
+    //Variáveis de material e luz
     _program->setUniformValue("light.position", v*QVector3D(5,5,-5) );
     _program->setUniformValue("material.ambient", QVector3D(0.7f,0.7f,0.7f));
     _program->setUniformValue("material.diffuse", QVector3D(1.0f,1.0f,1.0f));
     _program->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
     _program->setUniformValue("material.shininess", 24.0f);
-
     _program->setUniformValue("color", QVector3D(1,0,0));
-    //_program->setUniformValue("color",color);
-   glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indices.size()), GL_UNSIGNED_INT, nullptr);
+
+    //Desenhando os triângulos que formam o cubo
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indices.size()), GL_UNSIGNED_INT, nullptr);
 
     update();
 }
 
 void Render::createVAO()
 {
-    //Create and configure a new vao.
+    //Criando e configurando vao
     _vao.create();
     _vao.bind();
 
-    //Create vertex buffer.
+    //Criando buffer de pontos dos vértices
     glGenBuffers(1, &_pointsBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, _pointsBuffer);
     glBufferData(GL_ARRAY_BUFFER, _points.size()*sizeof(QVector3D), &_points[0], GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(0);
 
-    //Create vertex buffer.
+    //Criando buffer de normais
     glGenBuffers(1, &_normalsBuffer);
     glBindBuffer(GL_ARRAY_BUFFER, _normalsBuffer);
     glBufferData(GL_ARRAY_BUFFER, _normals.size()*sizeof(QVector3D), &_normals[0], GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-     glEnableVertexAttribArray(1);
-
-    //Add vertex.
-    glBindBuffer(GL_ARRAY_BUFFER, _pointsBuffer);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glEnableVertexAttribArray(0);
-
-    //Add normals.
-    glBindBuffer(GL_ARRAY_BUFFER, _normalsBuffer);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(1);
 
+
+    //Criando buffers de indices
     glGenBuffers(1, &_meshBuffer);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _meshBuffer);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, _indices.size()*sizeof(int), _indices.data(), GL_STATIC_DRAW);
-    //Add elements.
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _meshBuffer);
 
 
