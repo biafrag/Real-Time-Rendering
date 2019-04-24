@@ -4,23 +4,27 @@
 #include <fstream>
 #include<string>
 #include <QVector3D>
-
+#include <sstream>
 void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<QVector3D>& normals, std::vector<QVector2D>& texCoords, std::vector<int>& indexPoints, std::vector<int>& indexNormals, std::vector<int>& indexTex )
 {
 
+    int cont = 0;
     std::string line;
     std::string type = " ";
     std::ifstream myfile ("../stones/stones.obj");
-    while (!myfile.eof())
+    while (1)
     {
-      while(type != "v" && type != "vn" && type != "vt" && type != "f" && !myfile.eof() )
+      if(myfile.eof())
+      {
+          break;
+      }
+
+      else if(type != "v" && type != "vn" && type != "vt" && type != "f")
       {
           myfile >> type;
-          std::cout<<type<<std::endl;
       }
-      while(type == "v")
+      else if(type == "v")
       {
-          std::cout<<type<<std::endl;
           QVector3D point;
           float number;
           myfile >> number;
@@ -33,9 +37,8 @@ void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<
           points.push_back(point);
           myfile >> type;
       }
-      while(type == "vt")
+      else if(type == "vt")
       {
-          std::cout<<type<<std::endl;
           QVector2D tex;
           float number;
           myfile >> number;
@@ -46,9 +49,8 @@ void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<
           texCoords.push_back(tex);
           myfile >> type;
       }
-      while(type == "vn")
+      else if(type == "vn")
       {
-          std::cout<<type<<std::endl;
           QVector3D normal;
           float number;
           myfile >> number;
@@ -61,31 +63,33 @@ void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<
           normals.push_back(normal);
           myfile >> type;
       }
-      if(type == "f" )
+      else if(type == "f" )
       {
-          //std::cout<<type<<std::endl;
-          int index;
-          for(int count = 0;count < 9;count++)
+          std::cout<<type<<std::endl;
+          std::string s;
+          std::string aux;
+          std::vector<int> v;
+          v.resize(3);
+          for(int count = 0;count < 3;count++)
           {
-              myfile >> index;
-              printf("%d\n ",index);
-              //indexPoints.push_back(index);
-              //myfile >> index;
-              //indexNormals.push_back(index);
-              //myfile >> index;
-             // indexTex.push_back(index);
-//              std::cout << indexPoints[indexPoints.size() - 1] << "/" << indexNormals[indexNormals.size() - 1]<< "/"<< indexTex[indexTex.size() - 1] <<std::endl;
+
+              myfile >> aux;
+              std::istringstream f(aux);
+              int cont = 0;
+              while (getline(f, s, '/'))
+              {
+                      v[cont] = std::atoi(s.c_str());
+                      cont++;
+              }
+              indexPoints.push_back(v[0]);
+              indexTex.push_back(v[1]);
+              indexNormals.push_back(v[2]);
+              std::cout << indexPoints[indexPoints.size() - 1] << " " << indexTex[indexTex.size() - 1] << " "<< indexNormals[indexNormals.size() - 1] << " " << std::endl;
           }
-          if(!myfile.eof())
-          {
-              myfile >> type;
-          }
-          else
-          {
-              myfile.close();
-          }
-          //std::cout<<type<<std::endl;
+          std::cout <<std::endl;
+          myfile >> type;
       }
+      cont++;
     }
 
 }
