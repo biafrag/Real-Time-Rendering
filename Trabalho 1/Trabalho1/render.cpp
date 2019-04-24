@@ -92,7 +92,7 @@ Render::Render(QWidget* parent)
     std::vector<int> indexPointsTriangle;
     std::vector<int> indexPointsQuad;
     readFile("../golfball/golfball.obj",_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,_indexNormals,_indexTex);
-    _indexPoints = indexPointsTriangle;
+    //_indexPoints = indexPointsTriangle;
 //    for(int i = 0; i< indexPointsTriangle.size();i++ )
 //    {
 //        _indexPoints.push_back(indexPointsTriangle[i]);
@@ -105,36 +105,35 @@ Render::Render(QWidget* parent)
     cam.fovy  = 60.f;
     cam.width = width();
     cam.height = height();
+    quadToTriangleMesh(indexPointsQuad);
 }
 
 
-void Render::quadToTriangleMesh()
+void Render::quadToTriangleMesh(std::vector<int> indexPointsQuad)
 {
     //Checar
-//    std::vector<unsigned int> triangleMesh;
+    std::vector<unsigned int> triangleMesh;
 
-//    unsigned int numberofQuads = static_cast<unsigned int>(_mesh.size() / 4);
+    unsigned int numberofQuads = static_cast<unsigned int>(indexPointsQuad.size() / 4);
 
-//    //Every four elements it's a quadrilateral element
-//    for(unsigned int i = 0; i < numberofQuads; i++)
-//    {
-//        unsigned int v0 = _mesh[4 * i];
-//        unsigned int v1 = _mesh[4 * i + 1];
-//        unsigned int v2 = _mesh[4 * i + 2];
-//        unsigned int v3 = _mesh[4 * i + 3];
+    //Every four elements it's a quadrilateral element
+    for(unsigned int i = 0; i < numberofQuads; i++)
+    {
+        unsigned int v0 = indexPointsQuad[4 * i];
+        unsigned int v1 = indexPointsQuad[4 * i + 1];
+        unsigned int v2 = indexPointsQuad[4 * i + 2];
+        unsigned int v3 = indexPointsQuad[4 * i + 3];
 
-//        //First triangle from quadrilateral element
-//        triangleMesh.push_back(v0);
-//        triangleMesh.push_back(v1);
-//        triangleMesh.push_back(v3);
+        //First triangle from quadrilateral element
+        _indexPoints.push_back(v0);
+        _indexPoints.push_back(v1);
+        _indexPoints.push_back(v3);
 
-//        //Second triangle from quadrilateral element
-//        triangleMesh.push_back(v2);
-//        triangleMesh.push_back(v3);
-//        triangleMesh.push_back(v1);
-//    }
-
-//    _mesh = triangleMesh;
+        //Second triangle from quadrilateral element
+        _indexPoints.push_back(v2);
+        _indexPoints.push_back(v3);
+        _indexPoints.push_back(v1);
+    }
 }
 void Render::initializeGL()
 {
