@@ -5,7 +5,7 @@
 #include<string>
 #include <QVector3D>
 #include <sstream>
-void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<QVector3D>& normals, std::vector<QVector2D>& texCoords, std::vector<int>& indexPoints, std::vector<int>& indexNormals, std::vector<int>& indexTex )
+void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<QVector3D>& normals, std::vector<QVector2D>& texCoords, std::vector<int>& indexPointsTriangles,std::vector<int>& indexPointsQuads, std::vector<int>& indexNormals, std::vector<int>& indexTex )
 {
 
     int cont = 0;
@@ -69,27 +69,47 @@ void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<
           std::string s;
           std::string aux;
           std::vector<int> v;
-          v.resize(3);
-          for(int count = 0;count < 3;count++)
+          v.resize(12);
+          std::string auxtype ;
+          myfile >> auxtype;
+          int cont = 0;
+          while(auxtype != "f")
           {
-
-              myfile >> aux;
-              std::istringstream f(aux);
-              int cont = 0;
+              if(myfile.eof())
+              {
+                  break;
+              }
+              std::istringstream f(auxtype);
               while (getline(f, s, '/'))
               {
                       v[cont] = std::atoi(s.c_str());
                       cont++;
               }
-              indexPoints.push_back(v[0]);
-              indexTex.push_back(v[1]);
-              indexNormals.push_back(v[2]);
-              std::cout << indexPoints[indexPoints.size() - 1] << " " << indexTex[indexTex.size() - 1] << " "<< indexNormals[indexNormals.size() - 1] << " " << std::endl;
+              std::cout << v[0] << " " << v[1] << " "<< v[2] << " " << std::endl;
+              myfile >> auxtype;
+          }
+          type = auxtype;
+          if(cont == 12)
+          {
+              for(int i = 0; i < 4 ; i++)
+              {
+                  indexPointsQuads.push_back(v[3*i]);
+                  indexTex.push_back(v[3*i + 1]);
+                  indexNormals.push_back(v[3*i + 2]);
+              }
+          }
+          else
+          {
+              for(int i = 0; i < 3 ; i++)
+              {
+                  indexPointsTriangles.push_back(v[3*i]);
+                  indexTex.push_back(v[3*i + 1]);
+                  indexNormals.push_back(v[3*i + 2]);
+              }
           }
           std::cout <<std::endl;
-          myfile >> type;
       }
-      cont++;
+      //cont++;
     }
 
 }

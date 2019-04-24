@@ -89,7 +89,14 @@ const char* fragmentShaderSource = R"(
 Render::Render(QWidget* parent)
     :QOpenGLWidget(parent)
 {
-    readFile("../golfball/golfball.obj",_points,_normals,_texCoords,_indexPoints,_indexNormals,_indexTex);
+    std::vector<int> indexPointsTriangle;
+    std::vector<int> indexPointsQuad;
+    readFile("../golfball/golfball.obj",_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,_indexNormals,_indexTex);
+    _indexPoints = indexPointsTriangle;
+//    for(int i = 0; i< indexPointsTriangle.size();i++ )
+//    {
+//        _indexPoints.push_back(indexPointsTriangle[i]);
+//    }
     cam.at = QVector3D(0.f,0.f,0.f);
     cam.eye =  QVector3D(0.f,30.f,500.f);
     cam.up = QVector3D(0.f,2.f,0.f);
@@ -101,7 +108,34 @@ Render::Render(QWidget* parent)
 }
 
 
+void Render::quadToTriangleMesh()
+{
+    //Checar
+//    std::vector<unsigned int> triangleMesh;
 
+//    unsigned int numberofQuads = static_cast<unsigned int>(_mesh.size() / 4);
+
+//    //Every four elements it's a quadrilateral element
+//    for(unsigned int i = 0; i < numberofQuads; i++)
+//    {
+//        unsigned int v0 = _mesh[4 * i];
+//        unsigned int v1 = _mesh[4 * i + 1];
+//        unsigned int v2 = _mesh[4 * i + 2];
+//        unsigned int v3 = _mesh[4 * i + 3];
+
+//        //First triangle from quadrilateral element
+//        triangleMesh.push_back(v0);
+//        triangleMesh.push_back(v1);
+//        triangleMesh.push_back(v3);
+
+//        //Second triangle from quadrilateral element
+//        triangleMesh.push_back(v2);
+//        triangleMesh.push_back(v3);
+//        triangleMesh.push_back(v1);
+//    }
+
+//    _mesh = triangleMesh;
+}
 void Render::initializeGL()
 {
     initializeOpenGLFunctions();
@@ -206,7 +240,7 @@ void Render::paintGL()
     //inversa transposta da model-view
     _program->setUniformValue("normalMatrix", mv.inverted().transposed());
     //Variáveis de material e luz
-    _program->setUniformValue("light.position", v*QVector3D(5,5,-5) );
+    _program->setUniformValue("light.position", v * QVector3D(5,5,-5) );
     _program->setUniformValue("material.ambient", QVector3D(0.7f,0.7f,0.7f));
     _program->setUniformValue("material.diffuse", QVector3D(1.0f,1.0f,1.0f));
     _program->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
@@ -215,7 +249,6 @@ void Render::paintGL()
 
     //Desenhando os triângulos que formam o cubo
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexPoints.size()), GL_UNSIGNED_INT, nullptr);
-
     update();
 }
 
@@ -234,18 +267,18 @@ void Render::createVAO()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(0);
 
-//    //Criando buffer de normais
-//    glGenBuffers(1, &_normalsBuffer);
-//    glBindBuffer(GL_ARRAY_BUFFER, _normalsBuffer);
-//    glBufferData(GL_ARRAY_BUFFER, _normals.size()*sizeof(QVector3D), &_normals[0], GL_STATIC_DRAW);
-//    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-//    glEnableVertexAttribArray(1);
+    //Criando buffer de normais
+    glGenBuffers(1, &_normalsBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _normalsBuffer);
+    glBufferData(GL_ARRAY_BUFFER, _normals.size()*sizeof(QVector3D), &_normals[0], GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glEnableVertexAttribArray(1);
 
-//    //Criando buffers de textura
-//    glGenBuffers(1, &_texCoordsBuffer);
-//    glBindBuffer(GL_ARRAY_BUFFER,_texCoordsBuffer);
-//    glBufferData(GL_ARRAY_BUFFER, _texCoords.size()*sizeof(int), _texCoords.data(), GL_STATIC_DRAW);
-//    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+    //Criando buffers de textura
+    glGenBuffers(1, &_texCoordsBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER,_texCoordsBuffer);
+    glBufferData(GL_ARRAY_BUFFER, _texCoords.size()*sizeof(int), _texCoords.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(2);
 
     //Criando buffers de indexPoints
