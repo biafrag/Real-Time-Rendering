@@ -29,7 +29,7 @@ const char* vertexShaderSource = R"(
 
         fragNormal = ( normalMatrix * vec4( vertexNormal, 0 ) ).xyz;
 
-        fragUV = vertexTexCoord;
+        //fragUV = vertexTexCoord;
     }
 )";
 
@@ -51,17 +51,18 @@ const char* fragmentShaderSource = R"(
 
     uniform Light light;
     uniform Material material;
+    uniform vec3 color;
 
     in vec3 fragPos;
     in vec3 fragNormal;
-    in vec2 fragUV;
+    //in vec2 fragUV;
 
-    uniform sampler2D sampler;
+    //uniform sampler2D sampler;
     out vec3 finalColor;
 
     void main()
     {
-       vec3 ambient = material.ambient * texture(sampler,fragUV).rgb; // * light.ambient;
+       vec3 ambient = material.ambient * color.rgb; // * light.ambient;
        vec3 diffuse = vec3(0.0,0.0,0.0);
        vec3 specular = vec3(0.0,0.0,0.0);
 
@@ -72,7 +73,7 @@ const char* fragmentShaderSource = R"(
 
        if( iDif > 0 )
        {
-           diffuse = iDif * material.diffuse *  texture(sampler,fragUV).rgb; // * light.diffuse;
+           diffuse = iDif * material.diffuse *  color.rgb; // * light.diffuse;
 
            vec3 V = normalize(-fragPos);
            vec3 H = normalize(L + V);
@@ -88,12 +89,12 @@ const char* fragmentShaderSource = R"(
 Render::Render(QWidget* parent)
     :QOpenGLWidget(parent)
 {
-    readFile("../stones/stones.obj",_points,_normals,_texCoords,_indexPoints,_indexNormals,_indexTex);
+    readFile("../golfball/golfball.obj",_points,_normals,_texCoords,_indexPoints,_indexNormals,_indexTex);
     cam.at = QVector3D(0.f,0.f,0.f);
-    cam.eye =  QVector3D(0.f,30.f,90.f);
+    cam.eye =  QVector3D(0.f,30.f,500.f);
     cam.up = QVector3D(0.f,2.f,0.f);
     cam.zNear = 0.1f;
-    cam.zFar  = 100.f;
+    cam.zFar  = 1000.f;
     cam.fovy  = 60.f;
     cam.width = width();
     cam.height = height();
@@ -133,7 +134,7 @@ void Render::initializeGL()
     createVAO();
 
     //Criando textura para colocar no meu cubo
-    createTexture(":/textures/cube_texture.png");
+    //createTexture(":/textures/cube_texture.png");
 }
 
 
@@ -233,18 +234,18 @@ void Render::createVAO()
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(0);
 
-    //Criando buffer de normais
-    glGenBuffers(1, &_normalsBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, _normalsBuffer);
-    glBufferData(GL_ARRAY_BUFFER, _normals.size()*sizeof(QVector3D), &_normals[0], GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glEnableVertexAttribArray(1);
+//    //Criando buffer de normais
+//    glGenBuffers(1, &_normalsBuffer);
+//    glBindBuffer(GL_ARRAY_BUFFER, _normalsBuffer);
+//    glBufferData(GL_ARRAY_BUFFER, _normals.size()*sizeof(QVector3D), &_normals[0], GL_STATIC_DRAW);
+//    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+//    glEnableVertexAttribArray(1);
 
-    //Criando buffers de textura
-    glGenBuffers(1, &_texCoordsBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER,_texCoordsBuffer);
-    glBufferData(GL_ARRAY_BUFFER, _texCoords.size()*sizeof(int), _texCoords.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+//    //Criando buffers de textura
+//    glGenBuffers(1, &_texCoordsBuffer);
+//    glBindBuffer(GL_ARRAY_BUFFER,_texCoordsBuffer);
+//    glBufferData(GL_ARRAY_BUFFER, _texCoords.size()*sizeof(int), _texCoords.data(), GL_STATIC_DRAW);
+//    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(2);
 
     //Criando buffers de indexPoints

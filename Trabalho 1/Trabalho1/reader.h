@@ -11,7 +11,7 @@ void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<
     int cont = 0;
     std::string line;
     std::string type = " ";
-    std::ifstream myfile ("../stones/stones.obj");
+    std::ifstream myfile (fileName);
     while (1)
     {
       if(myfile.eof())
