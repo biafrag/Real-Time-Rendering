@@ -91,12 +91,7 @@ Render::Render(QWidget* parent)
 {
     std::vector<int> indexPointsTriangle;
     std::vector<int> indexPointsQuad;
-    readFile("../golfball/golfball.obj",_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,_indexNormals,_indexTex);
-    //_indexPoints = indexPointsTriangle;
-//    for(int i = 0; i< indexPointsTriangle.size();i++ )
-//    {
-//        _indexPoints.push_back(indexPointsTriangle[i]);
-//    }
+    readFile("../golfball/golfball.obj",_points,_normals,_texCoords,_indexPoints,indexPointsQuad,_indexNormals,_indexTex);
     cam.at = QVector3D(0.f,0.f,0.f);
     cam.eye =  QVector3D(0.f,30.f,500.f);
     cam.up = QVector3D(0.f,2.f,0.f);
@@ -125,14 +120,14 @@ void Render::quadToTriangleMesh(std::vector<int> indexPointsQuad)
         unsigned int v3 = indexPointsQuad[4 * i + 3];
 
         //First triangle from quadrilateral element
-        _indexPoints.push_back(v0);
-        _indexPoints.push_back(v1);
-        _indexPoints.push_back(v3);
+        _indexPoints.push_back(v0 - 1);
+        _indexPoints.push_back(v1 - 1);
+        _indexPoints.push_back(v3 - 1);
 
         //Second triangle from quadrilateral element
-        _indexPoints.push_back(v2);
-        _indexPoints.push_back(v3);
-        _indexPoints.push_back(v1);
+        _indexPoints.push_back(v2 - 1);
+        _indexPoints.push_back(v3 - 1);
+        _indexPoints.push_back(v1 - 1);
     }
 }
 void Render::initializeGL()
