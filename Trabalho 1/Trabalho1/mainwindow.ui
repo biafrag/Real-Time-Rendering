@@ -18,7 +18,28 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="Render" name="openGLWidget"/>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="QRadioButton" name="radioButtonGolfball">
+          <property name="text">
+           <string>Activate Golfball</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="Render" name="openGLWidget"/>
+        </item>
+        <item row="1" column="0">
+         <widget class="QRadioButton" name="radioButtonStones">
+          <property name="text">
+           <string>Activate Stones</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>

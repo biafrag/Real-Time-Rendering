@@ -89,17 +89,21 @@ const char* fragmentShaderSource = R"(
 Render::Render(QWidget* parent)
     :QOpenGLWidget(parent)
 {
-    std::vector<int> indexPointsTriangle;
-    std::vector<int> indexPointsQuad;
-    readFile("../golfball/golfball.obj",_points,_normals,_texCoords,_indexPoints,indexPointsQuad,_indexNormals,_indexTex);
     cam.at = QVector3D(0.f,0.f,0.f);
-    cam.eye =  QVector3D(0.f,30.f,500.f);
+    cam.eye =  QVector3D(0.f,100.f,300.f);
     cam.up = QVector3D(0.f,2.f,0.f);
     cam.zNear = 0.1f;
     cam.zFar  = 1000.f;
     cam.fovy  = 60.f;
     cam.width = width();
-    cam.height = height();
+    cam.height = height();   
+    setFile("../golfball/golfball.obj");
+}
+
+void Render::setFile(std::string fileName)
+{
+    std::vector<int> indexPointsQuad;
+    readFile(fileName,_points,_normals,_texCoords,_indexPoints,indexPointsQuad,_indexNormals,_indexTex);
     quadToTriangleMesh(indexPointsQuad);
 }
 

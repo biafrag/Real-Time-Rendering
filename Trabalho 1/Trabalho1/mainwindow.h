@@ -11,9 +11,16 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
+
+
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+
+private slots:
+//    void on_radioButtonGolfball_clicked();
+
+//    void on_radioButtonStones_clicked();
 
 private:
     Ui::MainWindow *ui;

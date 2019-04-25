@@ -16,6 +16,7 @@ public:
     void initializeGL() override;
     void resizeGL(int w, int h) override;
     void paintGL() override;
+    void setFile(std::string fileName);
 
 private:
     //Classe do qt que permite os shaders serem linkados e usados
