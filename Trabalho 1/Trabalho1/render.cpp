@@ -97,14 +97,21 @@ Render::Render(QWidget* parent)
     cam.fovy  = 60.f;
     cam.width = width();
     cam.height = height();   
-    setFile("../golfball/golfball.obj");
 }
 
 void Render::setFile(std::string fileName)
 {
     std::vector<int> indexPointsQuad;
+    _points.clear();
+    _normals.clear();
+    _texCoords.clear();
+    _indexPoints.clear();
+    _indexNormals.clear();
+    _indexTex.clear();
     readFile(fileName,_points,_normals,_texCoords,_indexPoints,indexPointsQuad,_indexNormals,_indexTex);
     quadToTriangleMesh(indexPointsQuad);
+    _program->bind();
+    //createVAO();
 }
 
 
@@ -161,6 +168,8 @@ void Render::initializeGL()
         std::cout<<"Problemas ao linkar shaders"<<std::endl;
     }
     //Liga o programa ao atual contexto
+    setFile("../golfball/golfball.obj");
+
     _program->bind();
 
     createVAO();
