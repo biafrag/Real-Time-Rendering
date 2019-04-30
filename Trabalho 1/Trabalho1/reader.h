@@ -93,18 +93,18 @@ void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<
           {
               for(int i = 0; i < 4 ; i++)
               {
-                  indexPointsQuads.push_back(v[3*i]);
-                  indexTex.push_back(v[3*i + 1]);
-                  indexNormals.push_back(v[3*i + 2]);
+                  indexPointsQuads.push_back(v[3*i] - 1);
+                  indexTex.push_back(v[3*i + 1] - 1);
+                  indexNormals.push_back(v[3*i + 2] - 1);
               }
           }
           else
           {
               for(int i = 0; i < 3 ; i++)
               {
-                  indexPointsTriangles.push_back(v[3*i]);
-                  indexTex.push_back(v[3*i + 1]);
-                  indexNormals.push_back(v[3*i + 2]);
+                  indexPointsTriangles.push_back(v[3*i] - 1);
+                  indexTex.push_back(v[3*i + 1] - 1);
+                  indexNormals.push_back(v[3*i + 2] - 1);
               }
           }
           std::cout <<std::endl;

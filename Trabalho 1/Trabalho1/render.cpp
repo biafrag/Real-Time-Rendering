@@ -1,7 +1,10 @@
+
 #include "render.h"
 #include <QImage>
 #include<QGLWidget>
 #include "reader.h"
+
+
 const char* vertexShaderSource = R"(
     #version 330 core
 
@@ -29,7 +32,7 @@ const char* vertexShaderSource = R"(
 
         fragNormal = ( normalMatrix * vec4( vertexNormal, 0 ) ).xyz;
 
-        //fragUV = vertexTexCoord;
+        fragUV = vertexTexCoord ;
     }
 )";
 
@@ -55,14 +58,14 @@ const char* fragmentShaderSource = R"(
 
     in vec3 fragPos;
     in vec3 fragNormal;
-    //in vec2 fragUV;
+    in vec2 fragUV;
 
-    //uniform sampler2D sampler;
+    uniform sampler2D sampler;
     out vec3 finalColor;
 
     void main()
     {
-       vec3 ambient = material.ambient * color.rgb; // * light.ambient;
+       vec3 ambient = material.ambient * texture(sampler, fragUV).rgb; // * light.ambient;
        vec3 diffuse = vec3(0.0,0.0,0.0);
        vec3 specular = vec3(0.0,0.0,0.0);
 
@@ -73,7 +76,7 @@ const char* fragmentShaderSource = R"(
 
        if( iDif > 0 )
        {
-           diffuse = iDif * material.diffuse *  color.rgb; // * light.diffuse;
+           diffuse = iDif * material.diffuse *  texture(sampler, fragUV).rgb; // * light.diffuse;
 
            vec3 V = normalize(-fragPos);
            vec3 H = normalize(L + V);
@@ -96,7 +99,7 @@ Render::Render(QWidget* parent)
     cam.zFar  = 1000.f;
     cam.fovy  = 60.f;
     cam.width = width();
-    cam.height = height();   
+    cam.height = height();
 }
 
 void Render::setFile(std::string fileName)
@@ -131,14 +134,14 @@ void Render::quadToTriangleMesh(std::vector<int> indexPointsQuad)
         unsigned int v3 = indexPointsQuad[4 * i + 3];
 
         //First triangle from quadrilateral element
-        _indexPoints.push_back(v0 - 1);
-        _indexPoints.push_back(v1 - 1);
-        _indexPoints.push_back(v3 - 1);
+        _indexPoints.push_back(v0);
+        _indexPoints.push_back(v1);
+        _indexPoints.push_back(v3);
 
         //Second triangle from quadrilateral element
-        _indexPoints.push_back(v2 - 1);
-        _indexPoints.push_back(v3 - 1);
-        _indexPoints.push_back(v1 - 1);
+        _indexPoints.push_back(v2);
+        _indexPoints.push_back(v3);
+        _indexPoints.push_back(v1);
     }
 }
 void Render::initializeGL()
@@ -168,16 +171,48 @@ void Render::initializeGL()
         std::cout<<"Problemas ao linkar shaders"<<std::endl;
     }
     //Liga o programa ao atual contexto
-    setFile("../golfball/golfball.obj");
+    //setFile("../golfball/golfball.obj");
+    setFile("../stones/stones.obj");
 
     _program->bind();
 
     createVAO();
 
     //Criando textura para colocar no meu cubo
-    //createTexture(":/textures/cube_texture.png");
-}
+    //createTexture("../golfball/golfball.png");
+    createTexture("../stones/stones.jpg");
 
+    printThings();
+}
+void Render::printThings()
+{
+    printf("Points: \n");
+    for(int i = 0; i< _points.size(); i ++)
+    {
+        printf( "%f %f %f\n",_points[i].x(),_points[i].y(),_points[i].z());
+    }
+
+
+    printf("Normals: \n");
+    for(int i = 0; i< _normals.size(); i ++)
+    {
+        printf( "%f %f %f\n",_normals[i].x(),_normals[i].y(),_normals[i].z());
+    }
+
+
+    printf("Textura: \n");
+    for(int i = 0; i< _texCoords.size(); i ++)
+    {
+        printf( "%f %f \n",_texCoords[i].x(),_texCoords[i].y());
+    }
+
+
+    printf("Indices: \n");
+    for(int i = 0; i< _indexPoints.size(); i ++)
+    {
+        printf( "%d ",_indexPoints[i]);
+    }
+}
 
 
 void Render::createTexture(const std::string& imagePath)
@@ -190,14 +225,14 @@ void Render::createTexture(const std::string& imagePath)
 
     //Abrir arquivo de imagem com o Qt
     QImage texImage = QGLWidget::convertToGLFormat(QImage(imagePath.c_str()));
-
+    //QImage texImage(imagePath.c_str());
 
     //Enviar a imagem para o OpenGL
     glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA,
                  texImage.width(), texImage.height(),
                  0, GL_RGBA, GL_UNSIGNED_BYTE, texImage.bits());
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
     glGenerateMipmap(GL_TEXTURE_2D);
 }

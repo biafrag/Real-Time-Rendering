@@ -16,11 +16,11 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_radioButtonGolfball_clicked()
 {
-    ui->openGLWidget->setFile("../golfball/golfball");
+    //ui->openGLWidget->setFile("../golfball/golfball");
 }
 
 void MainWindow::on_radioButtonStones_clicked()
 {
-    ui->openGLWidget->setFile("../stones/stones");
+    //ui->openGLWidget->setFile("../stones/stones");
 }
 

@@ -55,6 +55,7 @@ private:
     void createVAO();
     void createTexture(const std::string &imagePath);
     void quadToTriangleMesh(std::vector<int> indexPointsQuad);
+    void printThings();
 };
 
 #endif // RENDER_H
