@@ -65,27 +65,28 @@ const char* fragmentShaderSource = R"(
 
     void main()
     {
-       vec3 ambient = material.ambient * texture(sampler, fragUV).rgb; // * light.ambient;
-       vec3 diffuse = vec3(0.0,0.0,0.0);
-       vec3 specular = vec3(0.0,0.0,0.0);
+//       vec3 ambient = material.ambient * texture(sampler, fragUV).rgb; // * light.ambient;
+//       vec3 diffuse = vec3(0.0,0.0,0.0);
+//       vec3 specular = vec3(0.0,0.0,0.0);
 
-       vec3 N = normalize(fragNormal);
-       vec3 L = normalize(light.position - fragPos);
+//       vec3 N = normalize(fragNormal);
+//       vec3 L = normalize(light.position - fragPos);
 
-       float iDif = dot(L,N);
+//       float iDif = dot(L,N);
 
-       if( iDif > 0 )
-       {
-           diffuse = iDif * material.diffuse *  texture(sampler, fragUV).rgb; // * light.diffuse;
+//       if( iDif > 0 )
+//       {
+//           diffuse = iDif * material.diffuse *  texture(sampler, fragUV).rgb; // * light.diffuse;
 
-           vec3 V = normalize(-fragPos);
-           vec3 H = normalize(L + V);
+//           vec3 V = normalize(-fragPos);
+//           vec3 H = normalize(L + V);
 
-           float iSpec = pow(max(dot(N,H),0.0),material.shininess);
-           specular = iSpec * material.specular; // * light.specular;
-       }
+//           float iSpec = pow(max(dot(N,H),0.0),material.shininess);
+//           specular = iSpec * material.specular; // * light.specular;
+//       }
 
-       finalColor = ambient + diffuse + specular;
+      // finalColor = ambient + diffuse + specular;
+        finalColor = texture(sampler, fragUV).rgb;
     }
 )";
 
@@ -105,20 +106,21 @@ Render::Render(QWidget* parent)
 void Render::setFile(std::string fileName)
 {
     std::vector<int> indexPointsQuad;
+    std::vector<int> indexPointsTriangle;
     _points.clear();
     _normals.clear();
     _texCoords.clear();
     _indexPoints.clear();
     _indexNormals.clear();
     _indexTex.clear();
-    readFile(fileName,_points,_normals,_texCoords,_indexPoints,indexPointsQuad,_indexNormals,_indexTex);
-    quadToTriangleMesh(indexPointsQuad);
+    readFile(fileName,_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,_indexNormals,_indexTex);
+    quadToTriangleMesh(indexPointsQuad, indexPointsTriangle);
     _program->bind();
     //createVAO();
 }
 
 
-void Render::quadToTriangleMesh(std::vector<int> indexPointsQuad)
+void Render::quadToTriangleMesh(std::vector<int> indexPointsQuad, std::vector<int> indexPointsTriangle)
 {
     //Checar
     std::vector<unsigned int> triangleMesh;
@@ -142,6 +144,11 @@ void Render::quadToTriangleMesh(std::vector<int> indexPointsQuad)
         _indexPoints.push_back(v2);
         _indexPoints.push_back(v3);
         _indexPoints.push_back(v1);
+    }
+
+    for(int i = 0; i<indexPointsTriangle.size(); i++)
+    {
+        _indexPoints.push_back(indexPointsTriangle[i]);
     }
 }
 void Render::initializeGL()
@@ -171,8 +178,8 @@ void Render::initializeGL()
         std::cout<<"Problemas ao linkar shaders"<<std::endl;
     }
     //Liga o programa ao atual contexto
-    //setFile("../golfball/golfball.obj");
-    setFile("../stones/stones.obj");
+   // setFile("../golfball/golfball.obj");
+   setFile("../stones/stones.obj");
 
     _program->bind();
 
@@ -180,7 +187,7 @@ void Render::initializeGL()
 
     //Criando textura para colocar no meu cubo
     //createTexture("../golfball/golfball.png");
-    createTexture("../stones/stones.jpg");
+      createTexture("../stones/stones.jpg");
 
     printThings();
 }
@@ -233,6 +240,7 @@ void Render::createTexture(const std::string& imagePath)
                  0, GL_RGBA, GL_UNSIGNED_BYTE, texImage.bits());
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
     glGenerateMipmap(GL_TEXTURE_2D);
 }
@@ -319,7 +327,7 @@ void Render::createVAO()
     //Criando buffers de textura
     glGenBuffers(1, &_texCoordsBuffer);
     glBindBuffer(GL_ARRAY_BUFFER,_texCoordsBuffer);
-    glBufferData(GL_ARRAY_BUFFER, _texCoords.size()*sizeof(int), _texCoords.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, _texCoords.size()*sizeof(QVector2D), _texCoords.data(), GL_STATIC_DRAW);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(2);
 
