@@ -19,9 +19,13 @@ const char* vertexShaderSource = R"(
     uniform mat4 mv;
     uniform mat4 normalMatrix; //inversa transposta da MV
 
-    //Posição e normal no espaço da câmera:
+    //Posição da luz no espaço da câmera
+    uniform vec3 posLight;
+
+    //Posição, normal e luz no espaço da câmera:
     out vec3 fragPos;
     out vec3 fragNormal;
+    out vec3 light;
 
     //Coordenadas de textura do fragmento
     out vec2 fragUV;
@@ -47,46 +51,41 @@ const char* fragmentShaderSource = R"(
         float shininess;
     };
 
-    struct Light
-    {
-        vec3 position; //No espaço da câmera
-    };
-
-    uniform Light light;
     uniform Material material;
     uniform vec3 color;
 
     in vec3 fragPos;
     in vec3 fragNormal;
     in vec2 fragUV;
+    in vec3 light;
 
     uniform sampler2D sampler;
     out vec3 finalColor;
 
     void main()
     {
-//       vec3 ambient = material.ambient * texture(sampler, fragUV).rgb; // * light.ambient;
-//       vec3 diffuse = vec3(0.0,0.0,0.0);
-//       vec3 specular = vec3(0.0,0.0,0.0);
+       vec3 ambient = material.ambient * texture(sampler, fragUV).rgb; // * light.ambient;
+       vec3 diffuse = vec3(0.0,0.0,0.0);
+       vec3 specular = vec3(0.0,0.0,0.0);
 
-//       vec3 N = normalize(fragNormal);
-//       vec3 L = normalize(light.position - fragPos);
+       vec3 N = normalize(fragNormal);
+       vec3 L = normalize(light - fragPos);
 
-//       float iDif = dot(L,N);
+       float iDif = dot(L,N);
 
-//       if( iDif > 0 )
-//       {
-//           diffuse = iDif * material.diffuse *  texture(sampler, fragUV).rgb; // * light.diffuse;
+       if( iDif > 0 )
+       {
+           diffuse = iDif * material.diffuse *  texture(sampler, fragUV).rgb; // * light.diffuse;
 
-//           vec3 V = normalize(-fragPos);
-//           vec3 H = normalize(L + V);
+           vec3 V = normalize(-fragPos);
+           vec3 H = normalize(L + V);
 
-//           float iSpec = pow(max(dot(N,H),0.0),material.shininess);
-//           specular = iSpec * material.specular; // * light.specular;
-//       }
+           float iSpec = pow(max(dot(N,H),0.0),material.shininess);
+           specular = iSpec * material.specular; // * light.specular;
+       }
 
-      // finalColor = ambient + diffuse + specular;
-        finalColor = texture(sampler, fragUV).rgb;
+       finalColor = ambient + diffuse + specular;
+        //finalColor = texture(sampler, fragUV).rgb;
     }
 )";
 
@@ -113,14 +112,14 @@ void Render::setFile(std::string fileName)
     _indexPoints.clear();
     _indexNormals.clear();
     _indexTex.clear();
-    readFile(fileName,_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,_indexNormals,_indexTex);
+    readFile(fileName,_points,_normals,_texCoords,_indexPoints,indexPointsQuad,_indexNormals,_indexTex);
     quadToTriangleMesh(indexPointsQuad, indexPointsTriangle);
     _program->bind();
     //createVAO();
 }
 
 
-void Render::quadToTriangleMesh(std::vector<int> indexPointsQuad, std::vector<int> indexPointsTriangle)
+void Render::quadToTriangleMesh(std::vector<int>& indexPointsQuad, std::vector<int>& indexPointsTriangle)
 {
     //Checar
     std::vector<unsigned int> triangleMesh;
@@ -146,10 +145,10 @@ void Render::quadToTriangleMesh(std::vector<int> indexPointsQuad, std::vector<in
         _indexPoints.push_back(v1);
     }
 
-    for(int i = 0; i<indexPointsTriangle.size(); i++)
-    {
-        _indexPoints.push_back(indexPointsTriangle[i]);
-    }
+//    for(int i = 0; i<indexPointsTriangle.size(); i++)
+//    {
+//        _indexPoints.push_back(indexPointsTriangle[i]);
+//    }
 }
 void Render::initializeGL()
 {
@@ -178,7 +177,7 @@ void Render::initializeGL()
         std::cout<<"Problemas ao linkar shaders"<<std::endl;
     }
     //Liga o programa ao atual contexto
-   // setFile("../golfball/golfball.obj");
+    //setFile("../golfball/golfball.obj");
    setFile("../stones/stones.obj");
 
     _program->bind();
@@ -187,7 +186,7 @@ void Render::initializeGL()
 
     //Criando textura para colocar no meu cubo
     //createTexture("../golfball/golfball.png");
-      createTexture("../stones/stones.jpg");
+     createTexture("../stones/stones.jpg");
 
     printThings();
 }
@@ -290,11 +289,11 @@ void Render::paintGL()
     //inversa transposta da model-view
     _program->setUniformValue("normalMatrix", mv.inverted().transposed());
     //Variáveis de material e luz
-    _program->setUniformValue("light.position", v * QVector3D(5,5,-5) );
-    _program->setUniformValue("material.ambient", QVector3D(0.7f,0.7f,0.7f));
+    _program->setUniformValue("posLight", v * QVector3D(5,5,-5) );
+    _program->setUniformValue("material.ambient", QVector3D(0.1f,0.1f,0.1f));
     _program->setUniformValue("material.diffuse", QVector3D(1.0f,1.0f,1.0f));
-    _program->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
-    _program->setUniformValue("material.shininess", 24.0f);
+    _program->setUniformValue("material.specular", QVector3D(0.3f,0.3f,0.3f));
+    _program->setUniformValue("material.shininess", 100.0f);
     _program->setUniformValue("color", QVector3D(1,0,0));
 
     //Desenhando os triângulos que formam o cubo
