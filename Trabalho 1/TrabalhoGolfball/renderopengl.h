@@ -7,12 +7,12 @@
 #include<QOpenGLShaderProgram>
 #include<QOpenGLBuffer>
 #include<QOpenGLVertexArrayObject>
-class Render:
+class RenderOpengl:
         public QOpenGLWidget
         , protected QOpenGLFunctions
 {
 public:
-    Render(QWidget *parent);
+    RenderOpengl(QWidget *parent);
     void initializeGL() override;
     void resizeGL(int w, int h) override;
     void paintGL() override;
@@ -22,7 +22,6 @@ private:
     //Classe do qt que permite os shaders serem linkados e usados
     QOpenGLShaderProgram* _program{nullptr};
 
-    std::vector<QVector3D> _tangents; //Vetor de cada ponto do meu objeto que será renderizado
     std::vector<QVector3D> _points; //Vetor de cada ponto do meu objeto que será renderizado
     std::vector<QVector3D> _normals; //Vetor de normal pra cada vértice do meu cubo
     std::vector<QVector2D> _texCoords; //Vetor de coordenadas de textura
@@ -59,7 +58,6 @@ private:
     void createNormalMapTexture(const std::string& imagePath);
     void quadToTriangleMesh(std::vector<int> &indexPointsQuad, std::vector<int> &indexPointsTriangle);
     void printThings();
-    void calculateTangent();
 };
 
 #endif // RENDER_H

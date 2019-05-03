@@ -1,5 +1,5 @@
 
-#include "render.h"
+#include "renderopengl.h"
 #include <QImage>
 #include<QGLWidget>
 #include "reader.h"
@@ -72,22 +72,18 @@ vec3 expand(vec3 v)
 
 void main()
 {
-    vec3 ambient = material.ambient * texture(sampler, fragUV).rgb; // * light.ambient;
+    vec3 ambient = material.ambient * color;/*texture(sampler, fragUV).rgb*/; // * light.ambient;
     vec3 diffuse = vec3(0.0,0.0,0.0);
     vec3 specular = vec3(0.0,0.0,0.0);
 
-    vec3 N = /*fragNormal;*/expand(texture(normalsampler,fragUV).rgb);
-
-    vec3 tangent = vec3(0,0,0);
-    vec3 binormal = cross(fragNormal,tangent);
-    mat3 rotation = transpose(mat3(tangent,binormal,fragNormal));
+    vec3 N = fragNormal; /*expand(texture(normalsampler,fragUV).rgb)*/;
     vec3 L = normalize(light);
 
     float iDif = dot(L,N);
 
     if( iDif > 0 )
     {
-        diffuse = iDif * material.diffuse * texture(sampler, fragUV).rgb; // * light.diffuse;
+        diffuse = iDif * material.diffuse * color; // * light.diffuse;
 
         vec3 V = normalize(-fragPos);
         vec3 H = normalize(L + V);
@@ -153,7 +149,7 @@ void main()
 //    finalColor = ambient + diffuse + specular;
 //}
 //)";
-Render::Render(QWidget* parent)
+RenderOpengl::RenderOpengl(QWidget* parent)
     :QOpenGLWidget(parent)
 {
     cam.at = QVector3D(1.f,1.f,0.f);
@@ -166,7 +162,7 @@ Render::Render(QWidget* parent)
     cam.height = height();
 }
 
-void Render::setFile(std::string fileName)
+void RenderOpengl::setFile(std::string fileName)
 {
     std::vector<int> indexPointsQuad;
     std::vector<int> indexPointsTriangle;
@@ -183,7 +179,7 @@ void Render::setFile(std::string fileName)
 }
 
 
-void Render::quadToTriangleMesh(std::vector<int>& indexPointsQuad, std::vector<int>& indexPointsTriangle)
+void RenderOpengl::quadToTriangleMesh(std::vector<int>& indexPointsQuad, std::vector<int>& indexPointsTriangle)
 {
     //Checar
     std::vector<unsigned int> triangleMesh;
@@ -214,7 +210,7 @@ void Render::quadToTriangleMesh(std::vector<int>& indexPointsQuad, std::vector<i
 //        _indexPoints.push_back(indexPointsTriangle[i]);
 //    }
 }
-void Render::initializeGL()
+void RenderOpengl::initializeGL()
 {
     initializeOpenGLFunctions();
 
@@ -241,9 +237,8 @@ void Render::initializeGL()
         std::cout<<"Problemas ao linkar shaders"<<std::endl;
     }
     //Liga o programa ao atual contexto
-   // setFile("../golfball/golfball.obj");
-    //setFile("../sphere/sphere.obj");
-   setFile("../stones/stones.obj");
+    //setFile("../sphere/spherebianca.obj");
+   setFile("../golfball/golfball.obj");
 
     _program->bind();
 
@@ -251,23 +246,13 @@ void Render::initializeGL()
 
     //Criando textura para colocar no meu cubo
    // createTexture("../golfball/golfball.png");
-     createTexture("../stones/stones.jpg");
+     //createTexture("../stones/stones.jpg");
 
-    createNormalMapTexture("../stones/stones_norm.jpg");
-
-    GLint textureLocation = glGetUniformLocation(_program->programId(), "sampler");
-    glUniform1i(textureLocation, 0);
-
-    GLint normalMap = glGetUniformLocation(_program->programId(), "normalsampler");
-    glUniform1i(normalMap,  1);
-
-    calculateTangent();
-
-    printf("Tamanho do vetor de pontos: %d  Tamanho do vetor de tangente: %d Tamanho de normal: %d",_points.size(),_tangents.size(),_normals.size());
+    //createNormalMapTexture("../stones/stones_norm.jpg");
 
     printThings();
 }
-void Render::printThings()
+void RenderOpengl::printThings()
 {
     printf("Points: \n");
     for(int i = 0; i< _points.size(); i ++)
@@ -298,7 +283,7 @@ void Render::printThings()
 }
 
 
-void Render::createTexture(const std::string& imagePath)
+void RenderOpengl::createTexture(const std::string& imagePath)
 {
     //Gerando textura e recebendo ID dessa textura
     glGenTextures(1, &_textureID);
@@ -325,7 +310,7 @@ void Render::createTexture(const std::string& imagePath)
 
 
 
-void Render::createNormalMapTexture(const std::string& imagePath)
+void RenderOpengl::createNormalMapTexture(const std::string& imagePath)
 {
     //Gerando textura e recebendo ID dessa textura
     glGenTextures(1, &_normalMap);
@@ -350,7 +335,7 @@ void Render::createNormalMapTexture(const std::string& imagePath)
 
 
 
-void Render::resizeGL(int w, int h)
+void RenderOpengl::resizeGL(int w, int h)
 {
     cam.width = w;
     cam.height = h;
@@ -358,7 +343,7 @@ void Render::resizeGL(int w, int h)
 
 
 
-void Render::paintGL()
+void RenderOpengl::paintGL()
 {
 
     //Dando bind no programa e no vao
@@ -381,14 +366,13 @@ void Render::paintGL()
     QMatrix4x4 mvp =p*mv;
 
     //Ativar e linkar a textura
-    glEnable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _textureID);
-//    _program->setUniformValue("sampler", 0);
+    _program->setUniformValue("sampler", 0);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _normalMap);
-//    _program->setUniformValue("normalsampler", 0);
+    _program->setUniformValue("normalsampler", 0);
 
     //Passando as variáveis uniformes para os shaders
     //model-view : Passa para espaço do olho
@@ -402,81 +386,23 @@ void Render::paintGL()
     //Imagem 2D
 //    _program->setUniformValue("material.ambient", QVector3D(0.1f,0.1f,0.1f));
 //    _program->setUniformValue("material.diffuse", QVector3D(1.0f,1.0f,1.0f));
-//    _program->setUniformValue("material.specular", QVector3D(0.f,0.3f,0.3f));
+//    _program->setUniformValue("material.specular", QVector3D(0.3f,0.3f,0.3f));
 //    _program->setUniformValue("material.shininess", 100.0f);
     //Bola
         _program->setUniformValue("material.ambient", QVector3D(0.2f,0.2f,0.2f));
         _program->setUniformValue("material.diffuse", QVector3D(0.8f,0.8f,0.8f));
-        _program->setUniformValue("material.specular", QVector3D(0.0f,0.0f,0.0f));
+        _program->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
         _program->setUniformValue("material.shininess", 100.0f);
-        _program->setUniformValue("color", QVector3D(1.0,1.0,1.0));
+        _program->setUniformValue("color", QVector3D(1.0,1,1));
 
     //Desenhando os triângulos que formam o cubo
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexPoints.size()), GL_UNSIGNED_INT, nullptr);
     update();
 }
 
-void Render::calculateTangent()
-{
-    std::vector<QVector3D> auxTang;
-    for(int i = 0; i<_indexPoints.size()/3;i++)
-    {
-        int id0 = _indexPoints[3*i];
-        int id1 = _indexPoints[3*i + 1];
-        int id2 = _indexPoints[3*i + 2];
-        QVector3D Gx = QVector3D(_points[id1].x(),_texCoords[id1].x(),_texCoords[id1].y());
-        QVector3D Hx = QVector3D(_points[id0].x(),_texCoords[id0].x(),_texCoords[id0].y());
-        QVector3D Rx = QVector3D(_points[id2].x(),_texCoords[id2].x(),_texCoords[id2].y());
 
-        QVector3D axbxcx = QVector3D::crossProduct((Gx - Hx),(Rx-Hx));
-        //float dx = QVector3D::dotProduct(-axbxcx,H);
 
-        float ax = axbxcx.x();
-        float bx = axbxcx.y();
-        float cx = axbxcx.z();
-
-        float tx = -bx/ax;
-
-        QVector3D Gy = QVector3D(_points[id1].y(),_texCoords[id1].x(),_texCoords[id1].y());
-        QVector3D Hy = QVector3D(_points[id0].y(),_texCoords[id0].x(),_texCoords[id0].y());
-        QVector3D Ry = QVector3D(_points[id2].y(),_texCoords[id2].x(),_texCoords[id2].y());
-
-        QVector3D aybycy = QVector3D::crossProduct((Gy - Hy),(Ry-Hy));
-        //float dx = QVector3D::dotProduct(-axbxcx,H);
-
-        float ay = aybycy.x();
-        float by = aybycy.y();
-        float cy = aybycy.z();
-
-        float ty = -by/ay;
-
-        QVector3D Gz = QVector3D(_points[id1].z(),_texCoords[id1].x(),_texCoords[id1].y());
-        QVector3D Hz = QVector3D(_points[id0].z(),_texCoords[id0].x(),_texCoords[id0].y());
-        QVector3D Rz = QVector3D(_points[id2].z(),_texCoords[id2].x(),_texCoords[id2].y());
-
-        QVector3D azbzcz = QVector3D::crossProduct((Gz - Hz),(Rz-Hz));
-        //float dx = QVector3D::dotProduct(-axbxcx,H);
-
-        float az = azbzcz.x();
-        float bz = azbzcz.y();
-        float cz = azbzcz.z();
-
-        float tz = -bz/az;
-
-        auxTang.push_back(QVector3D(tx,ty,tz));
-        auxTang.push_back(QVector3D(tx,ty,tz));
-        auxTang.push_back(QVector3D(tx,ty,tz));
-    }
-    _tangents.resize(_normals.size());
-    for(int i = 0; i< _indexPoints.size(); i++)
-    {
-        int id = _indexPoints[i];
-        _tangents[id] = auxTang[i];
-    }
-
-}
-
-void Render::createVAO()
+void RenderOpengl::createVAO()
 {
     //Criando e configurando vao
     _vao.create();
@@ -511,4 +437,3 @@ void Render::createVAO()
 
 
 }
-
