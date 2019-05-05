@@ -5,7 +5,7 @@
 #include<string>
 #include <QVector3D>
 #include <sstream>
-void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<QVector3D>& normals, std::vector<QVector2D>& texCoords, std::vector<int>& indexPointsTriangles,std::vector<int>& indexPointsQuads, std::vector<int>& indexNormals, std::vector<int>& indexTex )
+void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<QVector3D>& normals, std::vector<QVector2D>& texCoords, std::vector<int>& indexPointsTriangles,std::vector<int>& indexPointsQuads, std::vector<int>& indexNormalsTriangles, std::vector<int>& indexTexTriangles, std::vector<int>& indexNormalsQuads,std::vector<int>& indexTexQuads)
 {
 
     int cont = 0;
@@ -94,8 +94,8 @@ void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<
               for(int i = 0; i < 4 ; i++)
               {
                   indexPointsQuads.push_back(v[3*i] - 1);
-                  indexTex.push_back(v[3*i + 1] - 1);
-                  indexNormals.push_back(v[3*i + 2] - 1);
+                  indexTexQuads.push_back(v[3*i + 1] - 1);
+                  indexNormalsQuads.push_back(v[3*i + 2] - 1);
               }
           }
           else
@@ -103,13 +103,13 @@ void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<
               for(int i = 0; i < 3 ; i++)
               {
                   indexPointsTriangles.push_back(v[3*i] - 1);
-                  indexTex.push_back(v[3*i + 1] - 1);
-                  indexNormals.push_back(v[3*i + 2] - 1);
+                  indexTexTriangles.push_back(v[3*i + 1] - 1);
+                  indexNormalsTriangles.push_back(v[3*i + 2] - 1);
               }
           }
           std::cout <<std::endl;
       }
       //cont++;
     }
-
+    myfile.close();
 }

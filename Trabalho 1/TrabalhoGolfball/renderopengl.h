@@ -1,3 +1,4 @@
+//Usar debugger MSVC2017 32 bits
 #ifndef RENDER_H
 #define RENDER_H
 
@@ -7,6 +8,9 @@
 #include<QOpenGLShaderProgram>
 #include<QOpenGLBuffer>
 #include<QOpenGLVertexArrayObject>
+
+#include <glm/glm.hpp>
+
 class RenderOpengl:
         public QOpenGLWidget
         , protected QOpenGLFunctions
@@ -45,7 +49,7 @@ private:
    };
 
    Camera cam;
-   QMatrix4x4 _model;
+   glm::mat4x4 _model;
    QMatrix4x4 _view;
    QMatrix4x4 _proj;
    QOpenGLVertexArrayObject _vao;
@@ -56,8 +60,19 @@ private:
     void createVAO();
     void createTexture(const std::string &imagePath);
     void createNormalMapTexture(const std::string& imagePath);
-    void quadToTriangleMesh(std::vector<int> &indexPointsQuad, std::vector<int> &indexPointsTriangle);
+    void quadToTriangleMesh(std::vector<int> &indexPointsQuad, std::vector<int> &indexPointsTriangle, std::vector<int> &indexNormalsTriangles, std::vector<int> &indexTexTriangles, std::vector<int> &indexNormalsQuad, std::vector<int> &indexTexQuad);
     void printThings();
+    void organizingData();
+
+    bool mousepress;
+    QVector3D p0,p1; //pontos para fazer rotação
+    //Parte do arcball
+    virtual void mousePressEvent(QMouseEvent *event);
+    virtual void mouseReleaseEvent(QMouseEvent *event);
+    virtual void mouseMoveEvent(QMouseEvent *event);
+    virtual void wheelEvent(QWheelEvent *event);
+    double radius; //Sphere Radius
+    QVector3D Points_Sphere(QVector3D pointT);
 };
 
 #endif // RENDER_H
