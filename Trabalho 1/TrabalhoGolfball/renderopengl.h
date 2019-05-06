@@ -8,6 +8,7 @@
 #include<QOpenGLShaderProgram>
 #include<QOpenGLBuffer>
 #include<QOpenGLVertexArrayObject>
+#include <QOpenGLExtraFunctions>
 
 #include <glm/glm.hpp>
 
@@ -17,6 +18,7 @@ class RenderOpengl:
 {
 public:
     RenderOpengl(QWidget *parent);
+    ~RenderOpengl();
     void initializeGL() override;
     void resizeGL(int w, int h) override;
     void paintGL() override;

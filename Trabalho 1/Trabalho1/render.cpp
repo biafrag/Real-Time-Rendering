@@ -108,7 +108,7 @@ void main()
         specular = iSpec * material.specular; //Calcula componente especular
     }
 
-    finalColor = ambient + diffuse + specular; //Cor final é a soma das componentes
+    finalColor = ambient + diffuse + specular;
 }
 )";
 

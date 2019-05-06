@@ -50,7 +50,7 @@ const char* fragmentShaderSource = R"(
 
     void main()
     {
-       vec3 ambient = material.ambient * color.rgb; // * light.ambient;
+       vec3 ambient = material.ambient * fragNormal; // * light.ambient;
        vec3 diffuse = vec3(0.0,0.0,0.0);
        vec3 specular = vec3(0.0,0.0,0.0);
 
@@ -61,7 +61,7 @@ const char* fragmentShaderSource = R"(
 
        if( iDif > 0 )
        {
-           diffuse = iDif * material.diffuse * color.rgb; // * light.diffuse;
+           diffuse = iDif * material.diffuse * fragNormal; // * light.diffuse;
 
            vec3 V = normalize(-fragPos);
            vec3 H = normalize(L + V);
@@ -77,55 +77,55 @@ const char* fragmentShaderSource = R"(
 Render::Render(QWidget* parent)
     :QOpenGLWidget(parent)
 {
-    //São 8 pontos em um cubo
-    _points = {
-                {-0.5,0.5,0.5}, //1
-                {0.5,0.5,0.5}, //2
-                {-0.5,-0.5,0.5}, //3
-                {0.5,-0.5,0.5}, //4
-                {-0.5,0.5,-0.5}, //5
-                {0.5,0.5,-0.5},  //6
-                {-0.5,-0.5,-0.5},//7
-                {0.5,-0.5,-0.5} //8
-                };
-    // 2 triângulos por face, são 6 faces, então 12 triêngulos
-    _indices = {
+//    //São 8 pontos em um cubo
+//    _points = {
+//                {-0.5,0.5,0.5}, //1
+//                {0.5,0.5,0.5}, //2
+//                {-0.5,-0.5,0.5}, //3
+//                {0.5,-0.5,0.5}, //4
+//                {-0.5,0.5,-0.5}, //5
+//                {0.5,0.5,-0.5},  //6
+//                {-0.5,-0.5,-0.5},//7
+//                {0.5,-0.5,-0.5} //8
+//                };
+//    // 2 triângulos por face, são 6 faces, então 12 triêngulos
+//    _indices = {
 
-                1, 0, 2,
-                1, 2, 3,
-                5, 1, 3,
-                5, 3, 7,
-                4, 5, 6,
-                6, 5, 7,
-                0, 4, 6,
-                0, 6, 2,
-                2, 6, 3,
-                3, 6, 7,
-                5, 4, 1,
-                4, 0, 1
+//                1, 0, 2,
+//                1, 2, 3,
+//                5, 1, 3,
+//                5, 3, 7,
+//                4, 5, 6,
+//                6, 5, 7,
+//                0, 4, 6,
+//                0, 6, 2,
+//                2, 6, 3,
+//                3, 6, 7,
+//                5, 4, 1,
+//                4, 0, 1
 
-                };
-    _normals.resize(_points.size(), QVector3D(0, 0, 0));
-    for (unsigned int t = 0; t < _indices.size() / 3; t++)
-    {
-       //Pega vértices do triângulo
-       unsigned int v0 = _indices[3 * t + 0];
-       unsigned int v1 = _indices[3 * t + 1];
-       unsigned int v2 = _indices[3 * t + 2];
+//                };
+//    _normals.resize(_points.size(), QVector3D(0, 0, 0));
+//    for (unsigned int t = 0; t < _indices.size() / 3; t++)
+//    {
+//       //Pega vértices do triângulo
+//       unsigned int v0 = _indices[3 * t + 0];
+//       unsigned int v1 = _indices[3 * t + 1];
+//       unsigned int v2 = _indices[3 * t + 2];
 
-       //Faz produto externo para achar normal
-       QVector3D n = QVector3D::crossProduct(_points[v1] - _points[v0], _points[v2] - _points[v0]);
+//       //Faz produto externo para achar normal
+//       QVector3D n = QVector3D::crossProduct(_points[v1] - _points[v0], _points[v2] - _points[v0]);
 
-       //Os pontos são afetados por 3 normais, por isso o +=
-       _normals[v0] += n;
-       _normals[v1] += n;
-       _normals[v2] += n;
-    }
-    //Normaliza todas as normais
-    for (auto& normal : _normals)
-    {
-       normal = normal.normalized();
-    }
+//       //Os pontos são afetados por 3 normais, por isso o +=
+//       _normals[v0] += n;
+//       _normals[v1] += n;
+//       _normals[v2] += n;
+//    }
+//    //Normaliza todas as normais
+//    for (auto& normal : _normals)
+//    {
+//       normal = normal.normalized();
+//    }
     cam.at = QVector3D(0.f,0.f,0.f);
     cam.eye =  QVector3D(0.f,30.f,90.f);
     cam.up = QVector3D(0.f,2.f,0.f);
@@ -134,6 +134,7 @@ Render::Render(QWidget* parent)
     cam.fovy  = 60.f;
     cam.width = width();
     cam.height = height();
+    createSphere();
 }
 
 
@@ -218,6 +219,64 @@ void Render::paintGL()
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indices.size()), GL_UNSIGNED_INT, nullptr);
 
     update();
+}
+
+int getIndex( int i, int j, int n )
+{
+    return j + i * ( n + 1 );
+}
+void Render::createSphere()
+{
+    const int n = 100;
+    const int m = 100;
+
+    const int numTriangles = 2 * n * m;
+    const int numVertices = ( n + 1 ) * ( m + 1 );
+
+    for( unsigned int i = 0; i <= n; i++ )
+    {
+        for( unsigned int j = 0; j <= m; j++ )
+        {
+            //Atualizar as coordenadas de textura
+            float s = (float) i / n;
+            float t = (float) j / m;
+//            _texCoords.push_back(QVector2D(s,t));
+
+            //Calcula os parâmetros
+            double theta = 2 * s * M_PI;
+            double phi = t * M_PI;
+            double sinTheta = sin( theta );
+            double cosTheta = cos( theta );
+            double sinPhi = sin( phi );
+            double cosPhi = cos( phi );
+
+            //Calcula os vértices == equacao da esfera
+            _points.push_back( QVector3D(cosTheta * sinPhi,
+                                          cosPhi,
+                                          sinTheta * sinPhi) );
+        }
+    }
+
+    _normals = _points;
+
+    _indices.resize(numTriangles*3);
+
+    //Preenche o vetor com a triangulação
+    unsigned int k = 0;
+    for( unsigned int i = 0; i < n; i++ )
+    {
+        for( unsigned int j = 0; j < m; j++ )
+        {
+            _indices[ k++ ] = getIndex( i + 1, j, n );
+            _indices[ k++ ] = getIndex( i + 1, j + 1, n );
+            _indices[ k++ ] = getIndex( i, j, n );
+
+
+            _indices[ k++ ] = getIndex( i + 1, j + 1, n );
+            _indices[ k++ ] = getIndex( i, j + 1, n );
+            _indices[ k++ ] = getIndex( i, j, n );
+        }
+    }
 }
 
 void Render::createVAO()

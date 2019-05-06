@@ -10,7 +10,7 @@
 
 
 const char* vertexShaderSource = R"(
-    #version 330 core
+    #version 410 core
 
     layout( location = 0 ) in vec3 vertexPos; //Posição do vértice
     layout( location = 1 ) in vec3 vertexNormal; //Normal do vértice
@@ -51,13 +51,13 @@ const char* vertexShaderSource = R"(
         fragUV = vertexTexCoord ;
 
         //Colocando luz no espaço tangente
-        light = rotation*normalize(lightPos - fragPos);
+        light = /*rotation**/normalize(lightPos - fragPos);
     }
 )";
 
 
 const char* fragmentShaderSource = R"(
-#version 330 core
+#version 410 core
 
 struct Material //Propriedades do material
 {
@@ -87,12 +87,12 @@ vec3 expand(vec3 v)
 
 void main()
 {
-    vec3 ambient = material.ambient * texture(sampler, fragUV).rgb; //Componente da luz ambiente
+    vec3 ambient = material.ambient * fragNormal;// texture(sampler, fragUV).rgb; //Componente da luz ambiente
     vec3 diffuse = vec3(0.0,0.0,0.0);
     vec3 specular = vec3(0.0,0.0,0.0);
 
     //Normal usada é a de textura de mapa de normal
-    vec3 N = /*fragNormal;*/expand(texture(normalsampler,fragUV).rgb);
+    vec3 N = fragNormal;//expand(texture(normalsampler,fragUV).rgb);
 
     //Normalizando novamente a luz no espaço do olho
     vec3 L = normalize(light);
@@ -103,7 +103,7 @@ void main()
     //Se certifica que a luz e a normal não são perpendiculares
     if( iDif > 0 )
     {
-        diffuse = iDif * material.diffuse * texture(sampler, fragUV).rgb; // Calcula componente difusa da luz
+        diffuse = iDif * material.diffuse * fragNormal;//texture(sampler, fragUV).rgb; // Calcula componente difusa da luz
 
         vec3 V = normalize(-fragPos); // Viewer
         vec3 H = normalize(L + V);
@@ -120,7 +120,7 @@ RenderOpengl::RenderOpengl(QWidget* parent)
     :QOpenGLWidget(parent)
 {
     cam.at = QVector3D(0.f,0.f,0.f);
-    cam.eye =  QVector3D(0.f,300.f,300.f);
+    cam.eye =  QVector3D(0.f,0.f,300.f);
     cam.up = QVector3D(0.f,2.f,0.f);
     cam.zNear = 0.1f;
     cam.zFar  = 1000.f;
@@ -129,25 +129,36 @@ RenderOpengl::RenderOpengl(QWidget* parent)
     cam.height = height();
 }
 
+RenderOpengl::~RenderOpengl()
+{
+    delete _program;
+
+    //glDeleteVertexArrays(1, &_vao);
+    glDeleteBuffers(1, &_bitangentBuffer);
+    glDeleteBuffers(1, &_meshBuffer);
+    glDeleteBuffers(1, &_normalsBuffer);
+    glDeleteBuffers(1, &_pointsBuffer);
+    glDeleteBuffers(1, &_tangentBuffer);
+}
 void RenderOpengl::setFile(std::string fileName)
 {
-//    std::vector<int> indexPointsQuad;
-//    std::vector<int> indexPointsTriangle;
-//    std::vector<int> indexNormalsTriangle;
-//    std::vector<int> indexNormalsQuads;
-//    std::vector<int> indexTexTriangle;
-//    std::vector<int> indexTexQuads;
-//    _points.clear();
-//    _normals.clear();
-//    _texCoords.clear();
-//    _indexPoints.clear();
-//    _indexNormals.clear();
-//    _indexTex.clear();
-////    //readFile(fileName,_points,_normals,_texCoords,indexTexTriangle,indexPointsQuad,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
-//    readFile(fileName,_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
-//    quadToTriangleMesh(indexPointsQuad, indexPointsTriangle,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
-//    organizingData();
-    createSphere();
+    std::vector<int> indexPointsQuad;
+    std::vector<int> indexPointsTriangle;
+    std::vector<int> indexNormalsTriangle;
+    std::vector<int> indexNormalsQuads;
+    std::vector<int> indexTexTriangle;
+    std::vector<int> indexTexQuads;
+    _points.clear();
+    _normals.clear();
+    _texCoords.clear();
+    _indexPoints.clear();
+    _indexNormals.clear();
+    _indexTex.clear();
+//    //readFile(fileName,_points,_normals,_texCoords,indexTexTriangle,indexPointsQuad,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
+    readFile(fileName,_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
+    quadToTriangleMesh(indexPointsQuad, indexPointsTriangle,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
+    organizingData();
+    //createSphere();
 
 
 }
@@ -311,6 +322,8 @@ void RenderOpengl::initializeGL()
 
     makeCurrent();
 
+    glEnable(GL_DEPTH_TEST); //Não acreditooooo
+    glClearColor(0,0,0,1);
     glViewport(0,0,width(),height());
 
     //Layout de ponto e linha:
@@ -332,7 +345,7 @@ void RenderOpengl::initializeGL()
         std::cout<<"Problemas ao linkar shaders"<<std::endl;
     }
     //Liga o programa ao atual contexto
-    // setFile("../sphere/sphere.obj");
+    //setFile("../sphere/sphere.obj");
     setFile("../golfball/golfball.obj");
     //setFile("../earth.obj");
    //setFile("../stones/stones.obj");
@@ -399,7 +412,7 @@ void RenderOpengl::createTexture(const std::string& imagePath)
 
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
     glGenerateMipmap(GL_TEXTURE_2D);
 }
@@ -473,6 +486,8 @@ void RenderOpengl::paintGL()
     glUniform1i(textureLocation, 0);
     glUniform1i(normalMapLocation,  1);
 
+    _program->bind();
+    _vao.bind();
     //Passando as variáveis uniformes para os shaders
     //model-view : Passa para espaço do olho
     _program->setUniformValue("mv", mv);
@@ -485,7 +500,7 @@ void RenderOpengl::paintGL()
 //                _model[3][0],_model[3][1],_model[3][2],_model[3][3]);
     _program->setUniformValue("normalMatrix", mv.inverted().transposed());
     //Variáveis de material e luz
-    _program->setUniformValue("lightPos", v*QVector3D(5,5,-5));
+    _program->setUniformValue("lightPos", /*cam.eye*/v*QVector3D(5,5,-5));
 
     //Bola
         _program->setUniformValue("material.ambient", QVector3D(0.3f,0.3f,0.3f));

@@ -49,6 +49,7 @@ private:
 
 private:
     void createVAO();
+    void createSphere();
 };
 
 #endif // RENDER_H
