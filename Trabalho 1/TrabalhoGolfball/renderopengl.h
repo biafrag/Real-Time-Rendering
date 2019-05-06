@@ -33,11 +33,16 @@ private:
     std::vector<int> _indexNormals; //vetor com os indices que formam os triângulos que serão renderizados
     std::vector<int> _indexTex; //vetor com os indices que formam os triângulos que serão renderizados
     std::vector<QVector3D> _colors;
+    std::vector<QVector3D> _tangents; // vetor de tangentes para cada vértice
+    std::vector<QVector3D> _bitangents; // vetor de tangentes para cada vértice
 
    unsigned int _pointsBuffer = static_cast<unsigned int>(-1);
    unsigned int _normalsBuffer = static_cast<unsigned int>(-1);
    unsigned int _meshBuffer = static_cast<unsigned int>(-1);
    unsigned int _texCoordsBuffer = static_cast<unsigned int>(-1);
+   unsigned int _tangentBuffer = static_cast<unsigned int>(-1);
+   unsigned int _bitangentBuffer = static_cast<unsigned int>(-1);
+
 
    struct Camera {
       QVector3D eye;      /* posicao do olho ou centro de projecao conica */
@@ -52,18 +57,21 @@ private:
    glm::mat4x4 _model;
    QMatrix4x4 _view;
    QMatrix4x4 _proj;
+
    QOpenGLVertexArrayObject _vao;
    unsigned int _textureID;
    unsigned int _normalMap;
 
 private:
-    void createVAO();
-    void createTexture(const std::string &imagePath);
-    void createNormalMapTexture(const std::string& imagePath);
-    void quadToTriangleMesh(std::vector<int> &indexPointsQuad, std::vector<int> &indexPointsTriangle, std::vector<int> &indexNormalsTriangles, std::vector<int> &indexTexTriangles, std::vector<int> &indexNormalsQuad, std::vector<int> &indexTexQuad);
-    void printThings();
-    void organizingData();
+    void createVAO(); //Cria VAO
+    void createTexture(const std::string &imagePath); //Seta textura difusa
+    void createNormalMapTexture(const std::string& imagePath); //Seta Textura de normal
+    void quadToTriangleMesh(std::vector<int> &indexPointsQuad, std::vector<int> &indexPointsTriangle, std::vector<int> &indexNormalsTriangles, std::vector<int> &indexTexTriangles, std::vector<int> &indexNormalsQuad, std::vector<int> &indexTexQuad); //Transforma malha de quads em malha de triângulos
+    void printThings(); //Printa coisas
+    void organizingData(); //Duplica vertices se necessário
+    void computeTangents(); //Calcula tangentes e binormais para cada ponto
 
+    //Arcball
     bool mousepress;
     QVector3D p0,p1; //pontos para fazer rotação
     //Parte do arcball
@@ -73,6 +81,7 @@ private:
     virtual void wheelEvent(QWheelEvent *event);
     double radius; //Sphere Radius
     QVector3D Points_Sphere(QVector3D pointT);
+    void createSphere();
 };
 
 #endif // RENDER_H

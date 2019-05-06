@@ -8,35 +8,46 @@
 const char* vertexShaderSource = R"(
     #version 330 core
 
-    layout( location = 0 ) in vec3 vertexPos;
-    layout( location = 1 ) in vec3 vertexNormal;
+    layout( location = 0 ) in vec3 vertexPos; //Posição do vértice
+    layout( location = 1 ) in vec3 vertexNormal; //Normal do vértice
 
-    //Coordenadas de textura
-    layout( location = 2 ) in vec2 vertexTexCoord;
+     //Coordenadas de textura
+     layout( location = 4 ) in vec2 vertexTexCoord; // Coordenada de textura
+
+     layout( location = 2 ) in vec3 tangent; // Vetor tangente
+     layout( location = 3 ) in vec3 bitangent; // Binormal ou bitangente
 
     //Matrizes
-    uniform mat4 mvp;
-    uniform mat4 mv;
-    uniform mat4 normalMatrix; //inversa transposta da MV
-    uniform vec3 lightPos;
+    uniform mat4 mvp; //Matriz model view projection
+    uniform mat4 mv; // Matriz model view
+    uniform mat4 normalMatrix; //Inversa transposta da MV
+    uniform vec3 lightPos; // Posição da luz em coordenada do olho
 
-    //Posição, normal e luz no espaço da câmera:
-    out vec3 fragPos;
-    out vec3 fragNormal;
-
-    //Coordenadas de textura do fragmento
-    out vec2 fragUV;
-    out vec3 light;
+    //Variáveis out
+    out vec3 fragPos; // Posição do vértice passada pro fragment
+    out vec3 fragNormal; // Normal do vértice passada pro fragment
+    out vec2 fragUV; // Coordenada de textura passada pro fragment
+    out vec3 light; // Posição da luz passada pro fragment
 
     void main()
     {
+        //Posição do vértice no espaço de projeção
         gl_Position = mvp * vec4( vertexPos, 1 );
+
+        //Posição do vétice no espaço do olho
         fragPos = ( mv * vec4( vertexPos, 1 ) ).xyz;
 
+        //Posição da normal no espaço
         fragNormal = ( normalMatrix * vec4( vertexNormal, 0 ) ).xyz;
 
+        //Matriz de rotação tbn para transformar luz para o eapaço tangente
+        mat3 rotation = transpose(mat3(tangent,bitangent,fragNormal));
+
+        //Só passando coordenadas de textura pro fragment
         fragUV = vertexTexCoord ;
-        light = normalize(lightPos - fragPos);
+
+        //Colocando luz no espaço tangente
+        light = rotation*normalize(lightPos - fragPos);
     }
 )";
 
@@ -44,7 +55,7 @@ const char* vertexShaderSource = R"(
 const char* fragmentShaderSource = R"(
 #version 330 core
 
-struct Material
+struct Material //Propriedades do material
 {
     vec3 ambient;
     vec3 diffuse;
@@ -61,9 +72,9 @@ in vec3 fragNormal;
 in vec2 fragUV;
 in vec3 light;
 
-uniform sampler2D sampler;
-uniform sampler2D normalsampler;
-out vec3 finalColor;
+uniform sampler2D sampler; //Textura difusa
+uniform sampler2D normalsampler; // Textura de mapa de normal
+out vec3 finalColor; // Cor final do objeto
 
 vec3 expand(vec3 v)
 {
@@ -72,96 +83,44 @@ vec3 expand(vec3 v)
 
 void main()
 {
-    vec3 ambient = material.ambient * texture(sampler, fragUV).rgb; // * light.ambient;
+    vec3 ambient = material.ambient * texture(sampler, fragUV).rgb; //Componente da luz ambiente
     vec3 diffuse = vec3(0.0,0.0,0.0);
     vec3 specular = vec3(0.0,0.0,0.0);
 
+    //Normal usada é a de textura de mapa de normal
     vec3 N = /*fragNormal;*/expand(texture(normalsampler,fragUV).rgb);
 
-    vec3 tangent = vec3(0,0,0);
-    vec3 binormal = cross(fragNormal,tangent);
-    mat3 rotation = transpose(mat3(tangent,binormal,fragNormal));
+    //Normalizando novamente a luz no espaço do olho
     vec3 L = normalize(light);
 
+    //Calcula produto interno entre luz e normal no espaço do olho
     float iDif = dot(L,N);
 
+    //Se certifica que a luz e a normal não são perpendiculares
     if( iDif > 0 )
     {
-        diffuse = iDif * material.diffuse * texture(sampler, fragUV).rgb; // * light.diffuse;
+        diffuse = iDif * material.diffuse * texture(sampler, fragUV).rgb; // Calcula componente difusa da luz
 
-        vec3 V = normalize(-fragPos);
+        vec3 V = normalize(-fragPos); // Viewer
         vec3 H = normalize(L + V);
 
         float iSpec = pow(max(dot(N,H),0.0),material.shininess);
-        specular = iSpec * material.specular; // * light.specular;
+        specular = iSpec * material.specular; //Calcula componente especular
     }
 
-    finalColor = ambient + diffuse + specular;
+    finalColor = ambient + diffuse + specular; //Cor final é a soma das componentes
 }
 )";
 
-//const char* fragmentShaderSource = R"(
-//#version 330 core
-
-//struct Material
-//{
-//    vec3 ambient;
-//    vec3 diffuse;
-//    vec3 specular;
-//    float shininess;
-//};
-
-
-//uniform Material material;
-
-//in vec3 fragPos;
-//in vec3 fragNormal;
-//in vec2 fragUV;
-//in vec3 light;
-
-//uniform sampler2D sampler;
-//uniform sampler2D normalsampler;
-//out vec3 finalColor;
-
-//vec3 expand(vec3 v)
-//{
-//   return (v - 0.5) * 2;
-//}
-
-//void main()
-//{
-//    vec3 ambient = material.ambient * texture(sampler, fragUV).rgb; // * light.ambient;
-//    vec3 diffuse = vec3(0.0,0.0,0.0);
-//    vec3 specular = vec3(0.0,0.0,0.0);
-
-//    vec3 N = /*fragNormal;*/ expand(texture(normalsampler,fragUV).rgb);
-//    vec3 L = normalize(light);
-
-//    float iDif = dot(L,N);
-
-//    if( iDif > 0 )
-//    {
-//        diffuse = iDif * material.diffuse * texture(sampler, fragUV).rgb; // * light.diffuse;
-
-//        vec3 V = normalize(-fragPos);
-//        vec3 H = normalize(L + V);
-
-//        float iSpec = pow(max(dot(N,H),0.0),material.shininess);
-//        specular = iSpec * material.specular; // * light.specular;
-//    }
-
-//    finalColor = ambient + diffuse + specular;
-//}
-//)";
 Render::Render(QWidget* parent)
     :QOpenGLWidget(parent)
 {
-    cam.at = QVector3D(1.f,1.f,0.f);
+    cam.at = QVector3D(0.5f,0.5f,0.f);
     cam.eye =  QVector3D(0.f,100.f,200.f);
     cam.up = QVector3D(0.f,2.f,0.f);
     cam.zNear = 0.1f;
     cam.zFar  = 1000.f;
-    cam.fovy  = 60.f;
+    cam.fovy  = 20.f;
     cam.width = width();
     cam.height = height();
 }
@@ -176,10 +135,10 @@ void Render::setFile(std::string fileName)
     _indexPoints.clear();
     _indexNormals.clear();
     _indexTex.clear();
-    readFile(fileName,_points,_normals,_texCoords,_indexPoints,indexPointsQuad,_indexNormals,_indexTex);
+    readFile(fileName,_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,_indexNormals,_indexTex);
     quadToTriangleMesh(indexPointsQuad, indexPointsTriangle);
+    //computeTangent();
     _program->bind();
-    //createVAO();
 }
 
 
@@ -209,10 +168,10 @@ void Render::quadToTriangleMesh(std::vector<int>& indexPointsQuad, std::vector<i
         _indexPoints.push_back(v1);
     }
 
-//    for(int i = 0; i<indexPointsTriangle.size(); i++)
-//    {
-//        _indexPoints.push_back(indexPointsTriangle[i]);
-//    }
+    for(int i = 0; i<indexPointsTriangle.size(); i++)
+    {
+        _indexPoints.push_back(indexPointsTriangle[i]);
+    }
 }
 void Render::initializeGL()
 {
@@ -260,8 +219,6 @@ void Render::initializeGL()
 
     GLint normalMap = glGetUniformLocation(_program->programId(), "normalsampler");
     glUniform1i(normalMap,  1);
-
-    calculateTangent();
 
     printf("Tamanho do vetor de pontos: %d  Tamanho do vetor de tangente: %d Tamanho de normal: %d",_points.size(),_tangents.size(),_normals.size());
 
@@ -416,62 +373,54 @@ void Render::paintGL()
     update();
 }
 
-void Render::calculateTangent()
+void Render::computeTangent()
 {
     std::vector<QVector3D> auxTang;
-    for(int i = 0; i<_indexPoints.size()/3;i++)
+    for ( int i=0; i<_indexPoints.size(); i++)
     {
-        int id0 = _indexPoints[3*i];
-        int id1 = _indexPoints[3*i + 1];
-        int id2 = _indexPoints[3*i + 2];
-        QVector3D Gx = QVector3D(_points[id1].x(),_texCoords[id1].x(),_texCoords[id1].y());
-        QVector3D Hx = QVector3D(_points[id0].x(),_texCoords[id0].x(),_texCoords[id0].y());
-        QVector3D Rx = QVector3D(_points[id2].x(),_texCoords[id2].x(),_texCoords[id2].y());
 
-        QVector3D axbxcx = QVector3D::crossProduct((Gx - Hx),(Rx-Hx));
-        //float dx = QVector3D::dotProduct(-axbxcx,H);
+            int id0 = _indexPoints[3*i];
+            int id1 = _indexPoints[3*i + 1];
+            int id2 = _indexPoints[3*i + 2];
 
-        float ax = axbxcx.x();
-        float bx = axbxcx.y();
-        float cx = axbxcx.z();
+            int idv0 = _indexTex[3*i];
+            int idv1 = _indexTex[3*i + 1];
+            int idv2 = _indexTex[3*i + 2];
 
-        float tx = -bx/ax;
+            // Shortcuts for vertices
+            QVector3D v0 = _points[id0];
+            QVector3D v1 = _points[id1];
+            QVector3D v2 = _points[id2];
 
-        QVector3D Gy = QVector3D(_points[id1].y(),_texCoords[id1].x(),_texCoords[id1].y());
-        QVector3D Hy = QVector3D(_points[id0].y(),_texCoords[id0].x(),_texCoords[id0].y());
-        QVector3D Ry = QVector3D(_points[id2].y(),_texCoords[id2].x(),_texCoords[id2].y());
+            // Shortcuts for UVs
+            QVector2D uv0 = _texCoords[idv0];
+            QVector2D uv1 = _texCoords[idv1];
+            QVector2D uv2 = _texCoords[idv2];
 
-        QVector3D aybycy = QVector3D::crossProduct((Gy - Hy),(Ry-Hy));
-        //float dx = QVector3D::dotProduct(-axbxcx,H);
+            // Edges of the triangle : position delta
+            QVector3D deltaPos1 = v1-v0;
+            QVector3D deltaPos2 = v2-v0;
 
-        float ay = aybycy.x();
-        float by = aybycy.y();
-        float cy = aybycy.z();
+            // UV delta
+            QVector2D deltaUV1 = uv1-uv0;
+            QVector2D deltaUV2 = uv2-uv0;
+    //We can now use our formula to compute the tangent and the bitangent :
 
-        float ty = -by/ay;
+            float r = 1.0f / (deltaUV1.x() * deltaUV2.y() - deltaUV1.y() * deltaUV2.x());
+            QVector3D tangent = (deltaPos1 * deltaUV2.y()   - deltaPos2 * deltaUV1.y())*r;
+            QVector3D bitangent = (deltaPos2 * deltaUV1.x()   - deltaPos1 * deltaUV2.x())*r;
+   // Finally, we fill the *tangents *and *bitangents *buffers. Remember, these buffers are not indexed yet, so each vertex has its own copy.
 
-        QVector3D Gz = QVector3D(_points[id1].z(),_texCoords[id1].x(),_texCoords[id1].y());
-        QVector3D Hz = QVector3D(_points[id0].z(),_texCoords[id0].x(),_texCoords[id0].y());
-        QVector3D Rz = QVector3D(_points[id2].z(),_texCoords[id2].x(),_texCoords[id2].y());
+            // Set the same tangent for all three vertices of the triangle.
+            // They will be merged later, in vboindexer.cpp
+            _tangents.push_back(tangent);
+            _tangents.push_back(tangent);
+            _tangents.push_back(tangent);
 
-        QVector3D azbzcz = QVector3D::crossProduct((Gz - Hz),(Rz-Hz));
-        //float dx = QVector3D::dotProduct(-axbxcx,H);
-
-        float az = azbzcz.x();
-        float bz = azbzcz.y();
-        float cz = azbzcz.z();
-
-        float tz = -bz/az;
-
-        auxTang.push_back(QVector3D(tx,ty,tz));
-        auxTang.push_back(QVector3D(tx,ty,tz));
-        auxTang.push_back(QVector3D(tx,ty,tz));
-    }
-    _tangents.resize(_normals.size());
-    for(int i = 0; i< _indexPoints.size(); i++)
-    {
-        int id = _indexPoints[i];
-        _tangents[id] = auxTang[i];
+            // Same thing for bitangents
+            _bitangents.push_back(bitangent);
+            _bitangents.push_back(bitangent);
+            _bitangents.push_back(bitangent);
     }
 
 }
@@ -496,12 +445,26 @@ void Render::createVAO()
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(1);
 
+    //Criando buffer de tangentes
+    glGenBuffers(1, &_tangentBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _tangentBuffer);
+    glBufferData(GL_ARRAY_BUFFER, _tangents.size()*sizeof(QVector3D), &_tangents[0], GL_STATIC_DRAW);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glEnableVertexAttribArray(2);
+
+    //Criando buffer de tangentes
+    glGenBuffers(1, &_bitangentBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _bitangentBuffer);
+    glBufferData(GL_ARRAY_BUFFER, _bitangents.size()*sizeof(QVector3D), &_bitangents[0], GL_STATIC_DRAW);
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glEnableVertexAttribArray(3);
+
     //Criando buffers de textura
     glGenBuffers(1, &_texCoordsBuffer);
     glBindBuffer(GL_ARRAY_BUFFER,_texCoordsBuffer);
     glBufferData(GL_ARRAY_BUFFER, _texCoords.size()*sizeof(QVector2D), _texCoords.data(), GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glEnableVertexAttribArray(4);
 
     //Criando buffers de indexPoints
     glGenBuffers(1, &_meshBuffer);

@@ -21,8 +21,6 @@ public:
 private:
     //Classe do qt que permite os shaders serem linkados e usados
     QOpenGLShaderProgram* _program{nullptr};
-
-    std::vector<QVector3D> _tangents; //Vetor de cada ponto do meu objeto que será renderizado
     std::vector<QVector3D> _points; //Vetor de cada ponto do meu objeto que será renderizado
     std::vector<QVector3D> _normals; //Vetor de normal pra cada vértice do meu cubo
     std::vector<QVector2D> _texCoords; //Vetor de coordenadas de textura
@@ -30,11 +28,15 @@ private:
     std::vector<int> _indexNormals; //vetor com os indices que formam os triângulos que serão renderizados
     std::vector<int> _indexTex; //vetor com os indices que formam os triângulos que serão renderizados
     std::vector<QVector3D> _colors;
+    std::vector<QVector3D> _tangents; // vetor de tangentes para cada vértice
+    std::vector<QVector3D> _bitangents; // vetor de tangentes para cada vértice
 
    unsigned int _pointsBuffer = static_cast<unsigned int>(-1);
    unsigned int _normalsBuffer = static_cast<unsigned int>(-1);
    unsigned int _meshBuffer = static_cast<unsigned int>(-1);
    unsigned int _texCoordsBuffer = static_cast<unsigned int>(-1);
+   unsigned int _tangentBuffer = static_cast<unsigned int>(-1);
+   unsigned int _bitangentBuffer = static_cast<unsigned int>(-1);
 
    struct Camera {
       QVector3D eye;      /* posicao do olho ou centro de projecao conica */
@@ -59,7 +61,7 @@ private:
     void createNormalMapTexture(const std::string& imagePath);
     void quadToTriangleMesh(std::vector<int> &indexPointsQuad, std::vector<int> &indexPointsTriangle);
     void printThings();
-    void calculateTangent();
+    void computeTangent();
 };
 
 #endif // RENDER_H

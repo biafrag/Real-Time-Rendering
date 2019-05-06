@@ -33,7 +33,7 @@ void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<
           point.setY(number);
           myfile >> number;
           point.setZ(number);
-          std::cout << point.x() << " " << point.y() << " "<< point.z() << " " << std::endl;
+          //std::cout << point.x() << " " << point.y() << " "<< point.z() << " " << std::endl;
           points.push_back(point);
           myfile >> type;
       }
@@ -45,7 +45,7 @@ void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<
           tex.setX(number);
           myfile >> number;
           tex.setY(number);
-          std::cout << tex.x() << " " << tex.y() << std::endl;
+          //std::cout << tex.x() << " " << tex.y() << std::endl;
           texCoords.push_back(tex);
           myfile >> type;
       }
@@ -59,13 +59,13 @@ void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<
           normal.setY(number);
           myfile >> number;
           normal.setZ(number);
-          std::cout << normal.x() << " " << normal.y() << " "<< normal.z() << " " << std::endl;
+         // std::cout << normal.x() << " " << normal.y() << " "<< normal.z() << " " << std::endl;
           normals.push_back(normal);
           myfile >> type;
       }
       else if(type == "f" )
       {
-          std::cout<<type<<std::endl;
+          //std::cout<<type<<std::endl;
           std::string s;
           std::string aux;
           std::vector<int> v;
@@ -85,7 +85,7 @@ void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<
                       v[cont] = std::atoi(s.c_str());
                       cont++;
               }
-              std::cout << v[0] << " " << v[1] << " "<< v[2] << " " << std::endl;
+              //std::cout << v[0] << " " << v[1] << " "<< v[2] << " " << std::endl;
               myfile >> auxtype;
           }
           type = auxtype;
