@@ -83,6 +83,7 @@ private:
     virtual void mouseReleaseEvent(QMouseEvent *event);
     virtual void mouseMoveEvent(QMouseEvent *event);
     virtual void wheelEvent(QWheelEvent *event);
+    virtual void keyPressEvent(QKeyEvent* event);
     double radius; //Sphere Radius
     QVector3D Points_Sphere(QVector3D pointT);
     void createSphere();

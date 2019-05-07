@@ -144,6 +144,7 @@ RenderOpengl::RenderOpengl(QWidget* parent)
     cam.fovy  = 60.f;
     cam.width = width();
     cam.height = height();
+    this->setFocus();
 }
 
 RenderOpengl::~RenderOpengl()
@@ -176,7 +177,7 @@ void RenderOpengl::setFile(std::string fileName)
 //    quadToTriangleMesh(indexPointsQuad, indexPointsTriangle,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
 //    organizingData();
 //    //computeTangents();
-     printThings();
+     //printThings();
     //createSphere();
 
 
@@ -368,7 +369,7 @@ void RenderOpengl::quadToTriangleMesh(std::vector<int>& indexPointsQuad, std::ve
         _indexTex.push_back(indexTexTriangle[i]);
     }
 
-    printThings();
+   // printThings();
 }
 
 void RenderOpengl::organizingData()
@@ -690,6 +691,39 @@ QVector3D RenderOpengl::Points_Sphere(QVector3D pointT)
     }
     return pointf;
 
+}
+
+void RenderOpengl::keyPressEvent(QKeyEvent* event)
+{
+    if(event->key() == Qt::Key_A)
+    {
+        cam.eye.setZ(cam.eye.z() - 20);
+    }
+    else if (event->key() == Qt::Key_Z)
+    {
+         cam.eye.setZ(cam.eye.z() + 20);
+    }
+    else if (event->key() == Qt::Key_S)
+    {
+        cam.eye.setX(cam.eye.x() + 20);
+    }
+    else if(event->key() == Qt::Key_X)
+    {
+        cam.eye.setX(cam.eye.x() - 20);
+    }
+    else if(event->key() == Qt::Key_Y)
+    {
+        cam.eye.setY(cam.eye.y() + 20);
+    }
+    else if (event->key() == Qt::Key_H)
+    {
+        cam.eye.setY(cam.eye.y() - 20);
+    }
+    else if (event->key() == Qt::Key_F)
+    {
+        cam.eye = QVector3D(0.f,0.f,300.f);
+    }
+    update();
 }
 
 void RenderOpengl::mousePressEvent(QMouseEvent *event)

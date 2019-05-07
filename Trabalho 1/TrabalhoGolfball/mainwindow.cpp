@@ -6,9 +6,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    QWidget::setFocusPolicy(Qt::FocusPolicy::StrongFocus);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+
 }
