@@ -1,7 +1,8 @@
 #include "renderopengl.h"
 #include <QImage>
 #include<QGLWidget>
-#include "reader.h"
+//#include "reader.h"
+#include "reader2.h"
 #include "math.h"
 #include <glm/ext.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -136,7 +137,7 @@ RenderOpengl::RenderOpengl(QWidget* parent)
     :QOpenGLWidget(parent)
 {
     cam.at = QVector3D(0.f,0.f,0.f);
-    cam.eye =  QVector3D(0.f,0.f,100.f);
+    cam.eye =  QVector3D(0.f,0.f,300.f);
     cam.up = QVector3D(0.f,2.f,0.f);
     cam.zNear = 0.1f;
     cam.zFar  = 1000.f;
@@ -171,12 +172,12 @@ void RenderOpengl::setFile(std::string fileName)
 //    _indexNormals.clear();
 //    _indexTex.clear();
 ////    //readFile(fileName,_points,_normals,_texCoords,indexTexTriangle,indexPointsQuad,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
-//    readFile(fileName,_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
+   readFile(fileName,_points,_normals,_tangents,_texCoords,_indexPoints);
 //    quadToTriangleMesh(indexPointsQuad, indexPointsTriangle,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
 //    organizingData();
 //    //computeTangents();
-////     printThings();
-    createSphere();
+     printThings();
+    //createSphere();
 
 
 }
@@ -429,7 +430,8 @@ void RenderOpengl::initializeGL()
         std::cout<<"Problemas ao linkar shaders"<<std::endl;
     }
     //Liga o programa ao atual contexto
-    setFile("../sphere/sphere.obj");
+   // setFile("../sphere/sphere.obj");
+        setFile("../bolinha/bolinha.obj");
     //setFile("../golfball/golfball.obj");
     //setFile("../earth.obj");
    //setFile("../stones/stones.obj");
@@ -475,7 +477,7 @@ void RenderOpengl::printThings()
 //        printf( "%d ",_indexPoints[i]);
 //    }
     printf("Tangentes: \n");
-    for(int i = 0; i< _tangents.size(); i ++)
+    for(int i = 0; i< _tangents.size(); i++)
     {
         printf( "%d ",_tangents[i]);
     }
@@ -592,10 +594,10 @@ void RenderOpengl::paintGL()
     _program->setUniformValue("lightPos", cam.eye/*v*QVector3D(5,5,-5)*/);
 
     //Bola
-        _program->setUniformValue("material.ambient", QVector3D(0.3f,0.3f,0.3f));
-        _program->setUniformValue("material.diffuse", QVector3D(1.0f,1.0f,1.0f));
+        _program->setUniformValue("material.ambient", QVector3D(0.2f,0.2f,0.2f));
+        _program->setUniformValue("material.diffuse", QVector3D(0.8f,0.8f,0.8f));
         _program->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
-        _program->setUniformValue("material.shininess", 24.0f);
+        _program->setUniformValue("material.shininess", 100.0f);
         _program->setUniformValue("color", QVector3D(1.0,1,1));
 
     //Desenhando os triângulos que formam o cubo

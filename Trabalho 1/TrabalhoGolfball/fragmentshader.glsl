@@ -8,7 +8,6 @@ struct Material //Propriedades do material
     float shininess;
 };
 
-
 uniform Material material;
 uniform vec3 color;
 
@@ -17,7 +16,6 @@ in vec3 fragNormal;
 in vec2 fragUV;
 in vec3 light;
 in vec3 tanViewer;
-in vec3 tang;
 uniform sampler2D sampler; //Textura difusa
 uniform sampler2D normalsampler; // Textura de mapa de normal
 out vec3 finalColor; // Cor final do objeto
@@ -51,12 +49,9 @@ void main()
         vec3 H = normalize(L + V);
 
         float iSpec = pow(max(dot(N,V),0.0),material.shininess);
-        specular = iSpec * material.specular; //Calcula componente especular
+//        specular = iSpec * material.specular; //Calcula componente especular
     }
 
     finalColor = ambient + diffuse + specular;
 
-       //float f = lenght(fragUV);
-      // float dxp = dFdx(fragPos);
-       //vec3 dyp = dFdx(vertexPos);
 }

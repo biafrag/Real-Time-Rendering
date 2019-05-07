@@ -7,7 +7,6 @@
      layout( location = 4 ) in vec2 vertexTexCoord; // Coordenada de textura
 
      layout( location = 2 ) in vec3 tangent; // Vetor tangente
-     layout( location = 3 ) in vec3 bitangent; // Binormal ou bitangente
 
     //Matrizes
     uniform mat4 mvp; //Matriz model view projection
@@ -20,12 +19,9 @@
     out vec3 fragNormal; // Normal do vértice passada pro fragment
     out vec2 fragUV; // Coordenada de textura passada pro fragment
     out vec3 light; // Posição da luz passada pro fragment
-    out vec3 tanViewer;
-    out vec3 tang;
+    out vec3 tanViewer; //Viewer no espaço tangente
     void main()
     {
-        //Teste
-        //vec3 dyp = dFdx(vertexPos);
 
         //Posição do vértice no espaço de projeção
         gl_Position = mvp * vec4( vertexPos, 1 );
@@ -33,11 +29,15 @@
         //Posição do vétice no espaço do olho
         fragPos = ( mv * vec4( vertexPos, 1 ) ).xyz;
 
-        //Posição da normal no espaço
+        //Posição da normal no espaço do olho
         fragNormal = ( normalMatrix * vec4( vertexNormal, 0 ) ).xyz;
+
+        //Posição da tangente no espaço do olho
         vec3 tangentVertexEye = ( normalMatrix * vec4( tangent, 0 ) ).xyz;
-        tang = tangent;
+
+        //Bitangente no espaço do olho
         vec3 bitangentVertexEye= normalize(cross(fragNormal,tangentVertexEye));
+
         //Matriz de rotação tbn para transformar luz para o eapaço tangente
         mat3 rotation = transpose(mat3(tangentVertexEye,bitangentVertexEye,fragNormal));
 
