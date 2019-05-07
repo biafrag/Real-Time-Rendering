@@ -49,7 +49,7 @@ void main()
         vec3 H = normalize(L + V);
 
         float iSpec = pow(max(dot(N,V),0.0),material.shininess);
-//        specular = iSpec * material.specular; //Calcula componente especular
+        specular = iSpec * material.specular; //Calcula componente especular
     }
 
     finalColor = ambient + diffuse + specular;

@@ -9,130 +9,6 @@
 
 #include <QMouseEvent>
 
-
-const char* vertexShaderSource = R"(
-    #version 410 core
-
-    layout( location = 0 ) in vec3 vertexPos; //Posição do vértice
-    layout( location = 1 ) in vec3 vertexNormal; //Normal do vértice
-
-     //Coordenadas de textura
-     layout( location = 4 ) in vec2 vertexTexCoord; // Coordenada de textura
-
-     layout( location = 2 ) in vec3 tangent; // Vetor tangente
-     layout( location = 3 ) in vec3 bitangent; // Binormal ou bitangente
-
-    //Matrizes
-    uniform mat4 mvp; //Matriz model view projection
-    uniform mat4 mv; // Matriz model view
-    uniform mat4 normalMatrix; //Inversa transposta da MV
-    uniform vec3 lightPos; // Posição da luz em coordenada do olho
-
-    //Variáveis out
-    out vec3 fragPos; // Posição do vértice passada pro fragment
-    out vec3 fragNormal; // Normal do vértice passada pro fragment
-    out vec2 fragUV; // Coordenada de textura passada pro fragment
-    out vec3 light; // Posição da luz passada pro fragment
-    out vec3 tanViewer;
-    out vec3 tang;
-
-    void main()
-    {
-        //Teste
-        //vec3 dyp = dFdx(vertexPos);
-
-
-
-        tang = tangente;
-
-        //Posição do vértice no espaço de projeção
-        gl_Position = mvp * vec4( vertexPos, 1 );
-
-        //Posição do vétice no espaço do olho
-        fragPos = ( mv * vec4( vertexPos, 1 ) ).xyz;
-
-        //Posição da normal no espaço
-        fragNormal = ( normalMatrix * vec4( vertexNormal, 0 ) ).xyz;
-        vec3 tangentVertexEye = ( normalMatrix * vec4( tangent, 0 ) ).xyz;
-        vec3 bitangentVertexEye= normalize(cross(fragNormal,tangentVertexEye));
-        //Matriz de rotação tbn para transformar luz para o eapaço tangente
-        mat3 rotation = transpose(mat3(tangentVertexEye,bitangentVertexEye,fragNormal));
-
-        //Só passando coordenadas de textura pro fragment
-        fragUV = vertexTexCoord ;
-
-        //Colocando luz no espaço tangente
-        light = rotation*normalize(lightPos - fragPos);
-        tanViewer =rotation*normalize(-fragPos);
-    }
-)";
-
-
-const char* fragmentShaderSource = R"(
-#version 410 core
-
-struct Material //Propriedades do material
-{
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-    float shininess;
-};
-
-
-uniform Material material;
-uniform vec3 color;
-
-in vec3 fragPos;
-in vec3 fragNormal;
-in vec2 fragUV;
-in vec3 light;
-in vec3 tanViewer;
-uniform sampler2D sampler; //Textura difusa
-uniform sampler2D normalsampler; // Textura de mapa de normal
-out vec3 finalColor; // Cor final do objeto
-in vec3 tang;
-
-vec3 expand(vec3 v)
-{
-   return (v - 0.5) * 2;
-}
-
-void main()
-{
-    vec3 ambient = material.ambient *tang;/* texture(sampler, fragUV).rgb;*/ //Componente da luz ambiente
-    vec3 diffuse = vec3(0.0,0.0,0.0);
-    vec3 specular = vec3(0.0,0.0,0.0);
-
-    //Normal usada é a de textura de mapa de normal
-    vec3 N = fragNormal;//normalize(expand(texture(normalsampler,fragUV).rgb));
-
-    //Normalizando novamente a luz no espaço do olho
-    vec3 L = normalize(light);
-
-    //Calcula produto interno entre luz e normal no espaço do olho
-    float iDif = dot(light,N);
-
-    //Se certifica que a luz e a normal não são perpendiculares
-    if( iDif > 0 )
-    {
-        diffuse = iDif * material.diffuse * tang; /*texture(sampler, fragUV).rgb;*/// Calcula componente difusa da luz
-
-        vec3 V = tanViewer; //normalize(-fragPos); // Viewer
-        vec3 H = normalize(L + V);
-
-        float iSpec = pow(max(dot(N,V),0.0),material.shininess);
-        specular = iSpec * material.specular; //Calcula componente especular
-    }
-
-    finalColor = ambient + diffuse + specular;
-
-       //float f = lenght(fragUV);
-       //float dxp = dFdx(fragPos);
-       //vec3 dyp = dFdx(vertexPos);
-}
-)";
-
 RenderOpengl::RenderOpengl(QWidget* parent)
     :QOpenGLWidget(parent)
 {
@@ -160,27 +36,7 @@ RenderOpengl::~RenderOpengl()
 }
 void RenderOpengl::setFile(std::string fileName)
 {
-//    std::vector<int> indexPointsQuad;
-//    std::vector<int> indexPointsTriangle;
-//    std::vector<int> indexNormalsTriangle;
-//    std::vector<int> indexNormalsQuads;
-//    std::vector<int> indexTexTriangle;
-//    std::vector<int> indexTexQuads;
-//    _points.clear();
-//    _normals.clear();
-//    _texCoords.clear();
-//    _indexPoints.clear();
-//    _indexNormals.clear();
-//    _indexTex.clear();
-////    //readFile(fileName,_points,_normals,_texCoords,indexTexTriangle,indexPointsQuad,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
    readFile(fileName,_points,_normals,_tangents,_texCoords,_indexPoints);
-//    quadToTriangleMesh(indexPointsQuad, indexPointsTriangle,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
-//    organizingData();
-//    //computeTangents();
-     //printThings();
-    //createSphere();
-
-
 }
 
 int getIndex( int i, int j, int n )
@@ -189,116 +45,62 @@ int getIndex( int i, int j, int n )
 }
 void RenderOpengl::createSphere()
 {
-//    const int n = 100;
-//    const int m = 100;
-
-//    const int numTriangles = 2 * n * m;
-//    const int numVertices = ( n + 1 ) * ( m + 1 );
-
-//    for( unsigned int i = 0; i <= n; i++ )
-//    {
-//        for( unsigned int j = 0; j <= m; j++ )
-//        {
-//            //Atualizar as coordenadas de textura
-//            float s = (float) i / n;
-//            float t = (float) j / m;
-//            _texCoords.push_back(QVector2D(s,t));
-
-//            //Calcula os parâmetros
-//            double theta = 2 * s * M_PI;
-//            double phi = t * M_PI;
-//            double sinTheta = sin( theta );
-//            double cosTheta = cos( theta );
-//            double sinPhi = sin( phi );
-//            double cosPhi = cos( phi );
-
-//            //Calcula os vértices == equacao da esfera
-//            _points.push_back( QVector3D(cosTheta * sinPhi,
-//                                          cosPhi,
-//                                          sinTheta * sinPhi) );
-//            _tangents.push_back(QVector3D(-sin(theta)*sin(phi)*2*M_PI,
-//                                          0,
-//                                          cos(theta)*sin(phi)*2*M_PI));
-
-//        }
-//    }
-
-//    _normals = _points;
-
-//    _indexPoints.resize(numTriangles*3);
-
-//    //Preenche o vetor com a triangulação
-//    unsigned int k = 0;
-//    for( unsigned int i = 0; i < n; i++ )
-//    {
-//        for( unsigned int j = 0; j < m; j++ )
-//        {
-//            _indexPoints[ k++ ] = getIndex( i + 1, j, n );
-//            _indexPoints[ k++ ] = getIndex( i + 1, j + 1, n );
-//            _indexPoints[ k++ ] = getIndex( i, j, n );
-
-
-//            _indexPoints[ k++ ] = getIndex( i + 1, j + 1, n );
-//            _indexPoints[ k++ ] = getIndex( i, j + 1, n );
-//            _indexPoints[ k++ ] = getIndex( i, j, n );
-//        }
-//    }
 
 //Outra esfera
 
-            std::vector<int> indices;
+    std::vector<int> indices;
 
-            float raio = 0.5;
-            unsigned int rings = 50;
-            unsigned int sectors = 50;
+    float raio = 0.5;
+    unsigned int rings = 50;
+    unsigned int sectors = 50;
 
-            float const R = 1/(float)(rings-1); // 0 a rings
-            float const S = 1/(float)(sectors-1); // 0 a sectors
-            unsigned r, s;
+    float const R = 1/(float)(rings-1); // 0 a rings
+    float const S = 1/(float)(sectors-1); // 0 a sectors
+    unsigned r, s;
 
-            for(r = 0; r < rings; r++)
-                for(s = 0; s < sectors; s++) {
+    for(r = 0; r < rings; r++)
+        for(s = 0; s < sectors; s++) {
 
-                    float phi = M_PI * r * R;
-                    float theta = 2 * M_PI * s * S;
+            float phi = M_PI * r * R;
+            float theta = 2 * M_PI * s * S;
 
-                    float const x = cos( theta ) * sin( phi );
-                    float const y = cos( phi );
-                    float const z = sin( theta ) * sin ( phi );
+            float const x = cos( theta ) * sin( phi );
+            float const y = cos( phi );
+            float const z = sin( theta ) * sin ( phi );
 
-                    //Textura s,t
-                    _texCoords.push_back(QVector2D(s*S,r*R));
+            //Textura s,t
+            _texCoords.push_back(QVector2D(s*S,r*R));
 
-                    ///Vertex position
-                    _points.push_back(QVector3D(x*raio,y*raio,z*raio));
+            ///Vertex position
+            _points.push_back(QVector3D(x*raio,y*raio,z*raio));
 
-                    ///Derivada de x,y,z em relação a s - Vetor tangente
-                    float tangx = -sin(theta)*sin(phi)*2*M_PI*S;
-                    float tangy =  0;
-                    float tangz = cos(theta)*sin(phi)*2*M_PI*S;
+            ///Derivada de x,y,z em relação a s - Vetor tangente
+            float tangx = -sin(theta)*sin(phi)*2*M_PI*S;
+            float tangy =  0;
+            float tangz = cos(theta)*sin(phi)*2*M_PI*S;
 
-                    _tangents.push_back(QVector3D(tangx,tangy,tangz));
-                    ///Vetor Normal
-                }
-            _normals = _points;
+            _tangents.push_back(QVector3D(tangx,tangy,tangz));
+            ///Vetor Normal
+        }
+    _normals = _points;
 
-            //std::vector<GLushort>::iterator i = indicesSphere.begin();
-            unsigned int k = 0;
-            indices.resize(rings * sectors * 4);
-            int i = 0;
-            for(r = 0; r < rings-1; r++) for(s = 0; s < sectors-1; s++)
-            {
-                indices[i] = (r * sectors + s);
-                indices[i+1] =  r * sectors + (s+1);
-                indices[i+2] = (r+1) * sectors + (s+1);
-                indices[i+3] = (r+1) * sectors + s;
-                i = i+4;
-            }
-            std::vector<int> indexPointsTriangle;
-            std::vector<int> indexNormalsTriangle;
-            std::vector<int> indexTexTriangle;
+    //std::vector<GLushort>::iterator i = indicesSphere.begin();
+    unsigned int k = 0;
+    indices.resize(rings * sectors * 4);
+    int i = 0;
+    for(r = 0; r < rings-1; r++) for(s = 0; s < sectors-1; s++)
+    {
+        indices[i] = (r * sectors + s);
+        indices[i+1] =  r * sectors + (s+1);
+        indices[i+2] = (r+1) * sectors + (s+1);
+        indices[i+3] = (r+1) * sectors + s;
+        i = i+4;
+    }
+    std::vector<int> indexPointsTriangle;
+    std::vector<int> indexNormalsTriangle;
+    std::vector<int> indexTexTriangle;
 
-            quadToTriangleMesh(indices, indexPointsTriangle,indexNormalsTriangle,indexTexTriangle,indices,indices);
+    quadToTriangleMesh(indices, indexPointsTriangle,indexNormalsTriangle,indexTexTriangle,indices,indices);
 
 }
 
@@ -417,8 +219,6 @@ void RenderOpengl::initializeGL()
     _program = new QOpenGLShaderProgram();
 
     //Adicionando shaders ao programa
-//    _program->addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShaderSource);
-//    _program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource);
 
     _program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/vertexshader.glsl");
     _program->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/fragmentshader.glsl");
@@ -431,11 +231,8 @@ void RenderOpengl::initializeGL()
         std::cout<<"Problemas ao linkar shaders"<<std::endl;
     }
     //Liga o programa ao atual contexto
-   // setFile("../sphere/sphere.obj");
-        setFile("../bolinha/bolinha.obj");
-    //setFile("../golfball/golfball.obj");
-    //setFile("../earth.obj");
-   //setFile("../stones/stones.obj");
+
+     setFile("../bolinha/bolinha.obj");
 
     _program->bind();
 
@@ -586,20 +383,16 @@ void RenderOpengl::paintGL()
     //model-view : Passa para espaço de projeção
     _program->setUniformValue("mvp", mvp);
     //inversa transposta da model-view
-//        QMatrix4x4 m = QMatrix4x4(_model[0][0],_model[0][1],_model[0][2],_model[0][3],
-//                _model[1][0],_model[1][1],_model[1][2],_model[1][3],
-//                _model[2][0],_model[2][1],_model[2][2],_model[2][3],
-//                _model[3][0],_model[3][1],_model[3][2],_model[3][3]);
     _program->setUniformValue("normalMatrix", mv.inverted().transposed());
     //Variáveis de material e luz
-    _program->setUniformValue("lightPos", cam.eye/*v*QVector3D(5,5,-5)*/);
+    _program->setUniformValue("lightPos", v * cam.eye/*v*QVector3D(5,5,-5)*/);
 
     //Bola
-        _program->setUniformValue("material.ambient", QVector3D(0.2f,0.2f,0.2f));
-        _program->setUniformValue("material.diffuse", QVector3D(0.8f,0.8f,0.8f));
-        _program->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
-        _program->setUniformValue("material.shininess", 100.0f);
-        _program->setUniformValue("color", QVector3D(1.0,1,1));
+    _program->setUniformValue("material.ambient", QVector3D(0.2f,0.2f,0.2f));
+    _program->setUniformValue("material.diffuse", QVector3D(0.8f,0.8f,0.8f));
+    _program->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
+    _program->setUniformValue("material.shininess", 100.0f);
+    _program->setUniformValue("color", QVector3D(1.0,1,1));
 
     //Desenhando os triângulos que formam o cubo
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexPoints.size()), GL_UNSIGNED_INT, nullptr);
@@ -771,7 +564,6 @@ void RenderOpengl::mouseMoveEvent(QMouseEvent *event)
             glm::mat4x4 Matrot;
             Matrot=glm::mat4_cast(Qrot);
            _model=Matrot*_model;
-
            p0=p1;
     }
     update();

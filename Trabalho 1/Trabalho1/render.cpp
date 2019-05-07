@@ -3,114 +3,9 @@
 #include <QImage>
 #include<QGLWidget>
 #include "reader.h"
-
-
-const char* vertexShaderSource = R"(
-    #version 330 core
-
-    layout( location = 0 ) in vec3 vertexPos; //Posição do vértice
-    layout( location = 1 ) in vec3 vertexNormal; //Normal do vértice
-
-     //Coordenadas de textura
-     layout( location = 4 ) in vec2 vertexTexCoord; // Coordenada de textura
-
-     layout( location = 2 ) in vec3 tangent; // Vetor tangente
-     layout( location = 3 ) in vec3 bitangent; // Binormal ou bitangente
-
-    //Matrizes
-    uniform mat4 mvp; //Matriz model view projection
-    uniform mat4 mv; // Matriz model view
-    uniform mat4 normalMatrix; //Inversa transposta da MV
-    uniform vec3 lightPos; // Posição da luz em coordenada do olho
-
-    //Variáveis out
-    out vec3 fragPos; // Posição do vértice passada pro fragment
-    out vec3 fragNormal; // Normal do vértice passada pro fragment
-    out vec2 fragUV; // Coordenada de textura passada pro fragment
-    out vec3 light; // Posição da luz passada pro fragment
-
-    void main()
-    {
-        //Posição do vértice no espaço de projeção
-        gl_Position = mvp * vec4( vertexPos, 1 );
-
-        //Posição do vétice no espaço do olho
-        fragPos = ( mv * vec4( vertexPos, 1 ) ).xyz;
-
-        //Posição da normal no espaço
-        fragNormal = ( normalMatrix * vec4( vertexNormal, 0 ) ).xyz;
-
-        //Matriz de rotação tbn para transformar luz para o eapaço tangente
-        mat3 rotation = transpose(mat3(tangent,bitangent,fragNormal));
-
-        //Só passando coordenadas de textura pro fragment
-        fragUV = vertexTexCoord ;
-
-        //Colocando luz no espaço tangente
-        light = rotation*normalize(lightPos - fragPos);
-    }
-)";
-
-
-const char* fragmentShaderSource = R"(
-#version 330 core
-
-struct Material //Propriedades do material
-{
-    vec3 ambient;
-    vec3 diffuse;
-    vec3 specular;
-    float shininess;
-};
-
-
-uniform Material material;
-uniform vec3 color;
-
-in vec3 fragPos;
-in vec3 fragNormal;
-in vec2 fragUV;
-in vec3 light;
-
-uniform sampler2D sampler; //Textura difusa
-uniform sampler2D normalsampler; // Textura de mapa de normal
-out vec3 finalColor; // Cor final do objeto
-
-vec3 expand(vec3 v)
-{
-   return (v - 0.5) * 2;
-}
-
-void main()
-{
-    vec3 ambient = material.ambient; //* texture(sampler, fragUV).rgb; //Componente da luz ambiente
-    vec3 diffuse = vec3(0.0,0.0,0.0);
-    vec3 specular = vec3(0.0,0.0,0.0);
-
-    //Normal usada é a de textura de mapa de normal
-    vec3 N = /*fragNormal;*/expand(texture(normalsampler,fragUV).rgb);
-
-    //Normalizando novamente a luz no espaço do olho
-    vec3 L = normalize(light);
-
-    //Calcula produto interno entre luz e normal no espaço do olho
-    float iDif = dot(L,N);
-
-    //Se certifica que a luz e a normal não são perpendiculares
-    if( iDif > 0 )
-    {
-        diffuse = iDif * material.diffuse; /** texture(sampler, fragUV).rgb;*/ // Calcula componente difusa da luz
-
-        vec3 V = normalize(-fragPos); // Viewer
-        vec3 H = normalize(L + V);
-
-        float iSpec = pow(max(dot(N,H),0.0),material.shininess);
-        specular = iSpec * material.specular; //Calcula componente especular
-    }
-
-    finalColor = ambient + diffuse + specular;
-}
-)";
+#include <glm/ext.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <QMouseEvent>
 
 Render::Render(QWidget* parent)
     :QOpenGLWidget(parent)
@@ -123,6 +18,7 @@ Render::Render(QWidget* parent)
     cam.fovy  = 45.f;
     cam.width = width();
     cam.height = height();
+    this->setFocus();
 }
 
 void Render::setFile(std::string fileName)
@@ -189,8 +85,8 @@ void Render::initializeGL()
     _program = new QOpenGLShaderProgram();
 
     //Adicionando shaders ao programa
-    _program->addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShaderSource);
-    _program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource);
+    _program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/vertexshader.glsl");
+    _program->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/fragmentshader.glsl");
 
     //Linka shaders que foram adicionados ao programa
     _program->link();
@@ -209,7 +105,6 @@ void Render::initializeGL()
     createVAO();
 
     //Criando textura para colocar no meu cubo
-   // createTexture("../golfball/golfball.png");
      createTexture("../stones/stones.jpg");
 
     createNormalMapTexture("../stones/stones_norm.jpg");
@@ -309,34 +204,44 @@ void Render::createNormalMapTexture(const std::string& imagePath)
 
 void Render::resizeGL(int w, int h)
 {
+    //Atualizar a viewport
+    glViewport(0,0,w,h);
+
+    //Atualizar a câmera
     cam.width = w;
     cam.height = h;
+    glm::vec3 zero(0);
+    radius=((glm::min(h,w)/2.0)-1);
 }
 
 
 
 void Render::paintGL()
 {
+        glEnable(GL_DEPTH_TEST);
+     //Dando bind no programa e no vao
+     _program->bind();
+     _vao.bind();
 
-     glEnable(GL_DEPTH_TEST);
-    //Dando bind no programa e no vao
-    _program->bind();
-    _vao.bind();
+     //Definindo matriz view e projection
+      _view.setToIdentity();
+      _view.lookAt(cam.eye, cam.at, cam.up);
+      _proj.setToIdentity();
+      _proj.perspective((cam.fovy*3.14)/180, (float)cam.width/cam.height, cam.zNear, cam.zFar);
+      //_model.setToIdentity();
 
-    //Definindo matriz view e projection
-     _view.setToIdentity();
-     _view.lookAt(cam.eye, cam.at, cam.up);
-     _proj.setToIdentity();
-     _proj.perspective((cam.fovy*3.14)/180, (float)cam.width/(float)cam.height, cam.zNear, cam.zFar);
-     _model.setToIdentity();
+     //Definindo matrizes para passar para os shaders
 
-    //Definindo matrizes para passar para os shaders
-    QMatrix4x4 m = _model;
-    QMatrix4x4 v = _view;
-    QMatrix4x4 p = _proj;
+     QMatrix4x4 m = QMatrix4x4(_model[0][0],_model[0][1],_model[0][2],_model[0][3],
+             _model[1][0],_model[1][1],_model[1][2],_model[1][3],
+             _model[2][0],_model[2][1],_model[2][2],_model[2][3],
+             _model[3][0],_model[3][1],_model[3][2],_model[3][3]);
+     //QMatrix4x4 m = _model;
+     QMatrix4x4 v = _view;
+     QMatrix4x4 p = _proj;
 
-    QMatrix4x4 mv = v*m;
-    QMatrix4x4 mvp =p*mv;
+     QMatrix4x4 mv = v*m;
+     QMatrix4x4 mvp =p*mv;
 
     //Ativar e linkar a textura
     glEnable(GL_TEXTURE_2D);
@@ -365,7 +270,7 @@ void Render::paintGL()
     //Bola
         _program->setUniformValue("material.ambient", QVector3D(0.2f,0.2f,0.2f));
         _program->setUniformValue("material.diffuse", QVector3D(0.8f,0.8f,0.8f));
-        _program->setUniformValue("material.specular", QVector3D(0.0f,0.0f,0.0f));
+        _program->setUniformValue("material.specular", QVector3D(0.3f,0.3f,0.3f));
         _program->setUniformValue("material.shininess", 100.0f);
         _program->setUniformValue("color", QVector3D(1.0,1.0,1.0));
 
@@ -431,4 +336,113 @@ void Render::createVAO()
 
 
 }
+
+
+void Render::mousePressEvent(QMouseEvent *event)
+{
+    printf("Clicou\n");
+    if(mousepress==false && event->button() == Qt::LeftButton)
+    {
+        mousepress=true;
+       QVector3D point( event->x(), height()-event->y(), 0 ); // Pegando o ponto que está na tela
+       point.setZ(0.f);
+       p0=Points_Sphere(point);
+
+
+    }
+    //Fit
+    if(event->button() == Qt::MiddleButton)
+    {
+          cam.eye = QVector3D(0.f,20.f,20.f);
+          _model= glm::mat4x4(1.f);
+    }
+
+    update();
+}
+
+
+void Render::mouseReleaseEvent(QMouseEvent *event)
+{
+    mousepress=false;
+    update();
+}
+
+QVector3D Render::Points_Sphere(QVector3D pointT)
+{
+    QVector3D pointf;
+    double r,s;
+    pointf.setX((pointT.x()-(cam.width/2))/radius);
+    pointf.setY((pointT.y()-(cam.height/2))/radius);
+    r=pointf.x()*pointf.x()+pointf.y()*pointf.y();
+
+    if(r>1.0)
+    {
+        s=1.0/sqrt(r);
+        pointf.setX(s*pointf.x());
+        pointf.setY(s*pointf.y());
+        pointf.setZ(0);
+    }
+    else
+    {
+        pointf.setZ(sqrt(1.0-r));
+    }
+    return pointf;
+
+}
+
+void Render::mouseMoveEvent(QMouseEvent *event)
+{
+    if(mousepress==true)
+    {
+
+            QVector3D point( event->x(), height()-event->y(), 0 ); // Pegando o ponto que está na tela
+            point.setZ(0.f);
+            p1=Points_Sphere(point);
+            glm::vec3 pt0(p0.x(),p0.y(),p0.z());
+            glm::vec3 pt1(p1.x(),p1.y(),p1.z());
+            glm::dquat Q0(0,pt0);
+            glm::dquat Q1(0,pt1);
+            glm::dquat Qrot=Q1*glm::conjugate(Q0);
+            glm::mat4x4 Matrot;
+            Matrot=glm::mat4_cast(Qrot);
+           _model=Matrot*_model;
+
+           p0=p1;
+    }
+    update();
+}
+
+void Render::keyPressEvent(QKeyEvent* event)
+{
+    if(event->key() == Qt::Key_A)
+    {
+        cam.eye.setZ(cam.eye.z() - 20);
+    }
+    else if (event->key() == Qt::Key_Z)
+    {
+         cam.eye.setZ(cam.eye.z() + 20);
+    }
+    else if (event->key() == Qt::Key_S)
+    {
+        cam.eye.setX(cam.eye.x() + 20);
+    }
+    else if(event->key() == Qt::Key_X)
+    {
+        cam.eye.setX(cam.eye.x() - 20);
+    }
+    else if(event->key() == Qt::Key_Y)
+    {
+        cam.eye.setY(cam.eye.y() + 20);
+    }
+    else if (event->key() == Qt::Key_H)
+    {
+        cam.eye.setY(cam.eye.y() - 20);
+    }
+    else if (event->key() == Qt::Key_F)
+    {
+        cam.eye = QVector3D(0.f,0.f,300.f);
+    }
+    update();
+}
+
 

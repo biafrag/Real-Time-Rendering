@@ -43,3 +43,8 @@ LIBS += -lOpenGL32
 linux{
 LIBS += -lGL
 }
+
+RESOURCES += \
+    shaders.qrc
+
+DISTFILES +=

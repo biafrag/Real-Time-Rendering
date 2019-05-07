@@ -7,6 +7,7 @@
 #include<QOpenGLShaderProgram>
 #include<QOpenGLBuffer>
 #include<QOpenGLVertexArrayObject>
+#include <glm/glm.hpp>
 class Render:
         public QOpenGLWidget
         , protected QOpenGLFunctions
@@ -48,7 +49,7 @@ private:
    };
 
    Camera cam;
-   QMatrix4x4 _model;
+   glm::mat4x4 _model;
    QMatrix4x4 _view;
    QMatrix4x4 _proj;
    QOpenGLVertexArrayObject _vao;
@@ -62,6 +63,18 @@ private:
     void quadToTriangleMesh(std::vector<int> &indexPointsQuad, std::vector<int> &indexPointsTriangle);
     void printThings();
     void computeTangent();
+
+    //Arcball
+    bool mousepress;
+    QVector3D p0,p1; //pontos para fazer rotação
+    //Parte do arcball
+    virtual void mousePressEvent(QMouseEvent *event);
+    virtual void mouseReleaseEvent(QMouseEvent *event);
+    virtual void mouseMoveEvent(QMouseEvent *event);
+    virtual void keyPressEvent(QKeyEvent* event);
+    double radius; //Sphere Radius
+    QVector3D Points_Sphere(QVector3D pointT);
+    void createSphere();
 };
 
 #endif // RENDER_H
