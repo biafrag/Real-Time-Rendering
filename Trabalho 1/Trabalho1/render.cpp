@@ -83,7 +83,7 @@ vec3 expand(vec3 v)
 
 void main()
 {
-    vec3 ambient = material.ambient * texture(sampler, fragUV).rgb; //Componente da luz ambiente
+    vec3 ambient = material.ambient; //* texture(sampler, fragUV).rgb; //Componente da luz ambiente
     vec3 diffuse = vec3(0.0,0.0,0.0);
     vec3 specular = vec3(0.0,0.0,0.0);
 
@@ -99,7 +99,7 @@ void main()
     //Se certifica que a luz e a normal não são perpendiculares
     if( iDif > 0 )
     {
-        diffuse = iDif * material.diffuse * texture(sampler, fragUV).rgb; // Calcula componente difusa da luz
+        diffuse = iDif * material.diffuse; /** texture(sampler, fragUV).rgb;*/ // Calcula componente difusa da luz
 
         vec3 V = normalize(-fragPos); // Viewer
         vec3 H = normalize(L + V);
@@ -116,11 +116,11 @@ Render::Render(QWidget* parent)
     :QOpenGLWidget(parent)
 {
     cam.at = QVector3D(0.5f,0.5f,0.f);
-    cam.eye =  QVector3D(0.f,100.f,200.f);
-    cam.up = QVector3D(0.f,2.f,0.f);
+    cam.eye =  QVector3D(0.f,0.0f,90.f);
+    cam.up = QVector3D(0.f,1.f,0.f);
     cam.zNear = 0.1f;
     cam.zFar  = 1000.f;
-    cam.fovy  = 20.f;
+    cam.fovy  = 45.f;
     cam.width = width();
     cam.height = height();
 }
@@ -137,7 +137,7 @@ void Render::setFile(std::string fileName)
     _indexTex.clear();
     readFile(fileName,_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,_indexNormals,_indexTex);
     quadToTriangleMesh(indexPointsQuad, indexPointsTriangle);
-    //computeTangent();
+    computeTangent();
     _program->bind();
 }
 
@@ -318,6 +318,7 @@ void Render::resizeGL(int w, int h)
 void Render::paintGL()
 {
 
+     glEnable(GL_DEPTH_TEST);
     //Dando bind no programa e no vao
     _program->bind();
     _vao.bind();
@@ -326,7 +327,7 @@ void Render::paintGL()
      _view.setToIdentity();
      _view.lookAt(cam.eye, cam.at, cam.up);
      _proj.setToIdentity();
-     _proj.perspective((cam.fovy*3.14)/180, (float)cam.width/cam.height, cam.zNear, cam.zFar);
+     _proj.perspective((cam.fovy*3.14)/180, (float)cam.width/(float)cam.height, cam.zNear, cam.zFar);
      _model.setToIdentity();
 
     //Definindo matrizes para passar para os shaders
@@ -375,54 +376,10 @@ void Render::paintGL()
 
 void Render::computeTangent()
 {
-    std::vector<QVector3D> auxTang;
-    for ( int i=0; i<_indexPoints.size(); i++)
+    for ( int i=0; i<_points.size(); i++)
     {
-
-            int id0 = _indexPoints[3*i];
-            int id1 = _indexPoints[3*i + 1];
-            int id2 = _indexPoints[3*i + 2];
-
-            int idv0 = _indexTex[3*i];
-            int idv1 = _indexTex[3*i + 1];
-            int idv2 = _indexTex[3*i + 2];
-
-            // Shortcuts for vertices
-            QVector3D v0 = _points[id0];
-            QVector3D v1 = _points[id1];
-            QVector3D v2 = _points[id2];
-
-            // Shortcuts for UVs
-            QVector2D uv0 = _texCoords[idv0];
-            QVector2D uv1 = _texCoords[idv1];
-            QVector2D uv2 = _texCoords[idv2];
-
-            // Edges of the triangle : position delta
-            QVector3D deltaPos1 = v1-v0;
-            QVector3D deltaPos2 = v2-v0;
-
-            // UV delta
-            QVector2D deltaUV1 = uv1-uv0;
-            QVector2D deltaUV2 = uv2-uv0;
-    //We can now use our formula to compute the tangent and the bitangent :
-
-            float r = 1.0f / (deltaUV1.x() * deltaUV2.y() - deltaUV1.y() * deltaUV2.x());
-            QVector3D tangent = (deltaPos1 * deltaUV2.y()   - deltaPos2 * deltaUV1.y())*r;
-            QVector3D bitangent = (deltaPos2 * deltaUV1.x()   - deltaPos1 * deltaUV2.x())*r;
-   // Finally, we fill the *tangents *and *bitangents *buffers. Remember, these buffers are not indexed yet, so each vertex has its own copy.
-
-            // Set the same tangent for all three vertices of the triangle.
-            // They will be merged later, in vboindexer.cpp
-            _tangents.push_back(tangent);
-            _tangents.push_back(tangent);
-            _tangents.push_back(tangent);
-
-            // Same thing for bitangents
-            _bitangents.push_back(bitangent);
-            _bitangents.push_back(bitangent);
-            _bitangents.push_back(bitangent);
+        _tangents.push_back(QVector3D (1,0,0));
     }
-
 }
 
 void Render::createVAO()

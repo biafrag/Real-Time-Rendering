@@ -35,3 +35,10 @@ HEADERS += \
 
 FORMS += \
         mainwindow.ui
+
+DISTFILES += \
+    shaders/vertexshader.glsl
+
+RESOURCES += \
+    shader.qrc
+

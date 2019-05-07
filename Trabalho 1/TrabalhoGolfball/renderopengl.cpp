@@ -32,9 +32,18 @@ const char* vertexShaderSource = R"(
     out vec3 fragNormal; // Normal do vértice passada pro fragment
     out vec2 fragUV; // Coordenada de textura passada pro fragment
     out vec3 light; // Posição da luz passada pro fragment
+    out vec3 tanViewer;
+    out vec3 tang;
 
     void main()
     {
+        //Teste
+        //vec3 dyp = dFdx(vertexPos);
+
+
+
+        tang = tangente;
+
         //Posição do vértice no espaço de projeção
         gl_Position = mvp * vec4( vertexPos, 1 );
 
@@ -43,15 +52,17 @@ const char* vertexShaderSource = R"(
 
         //Posição da normal no espaço
         fragNormal = ( normalMatrix * vec4( vertexNormal, 0 ) ).xyz;
-
+        vec3 tangentVertexEye = ( normalMatrix * vec4( tangent, 0 ) ).xyz;
+        vec3 bitangentVertexEye= normalize(cross(fragNormal,tangentVertexEye));
         //Matriz de rotação tbn para transformar luz para o eapaço tangente
-        mat3 rotation = transpose(mat3(tangent,bitangent,fragNormal));
+        mat3 rotation = transpose(mat3(tangentVertexEye,bitangentVertexEye,fragNormal));
 
         //Só passando coordenadas de textura pro fragment
         fragUV = vertexTexCoord ;
 
         //Colocando luz no espaço tangente
-        light = /*rotation**/normalize(lightPos - fragPos);
+        light = rotation*normalize(lightPos - fragPos);
+        tanViewer =rotation*normalize(-fragPos);
     }
 )";
 
@@ -75,10 +86,11 @@ in vec3 fragPos;
 in vec3 fragNormal;
 in vec2 fragUV;
 in vec3 light;
-
+in vec3 tanViewer;
 uniform sampler2D sampler; //Textura difusa
 uniform sampler2D normalsampler; // Textura de mapa de normal
 out vec3 finalColor; // Cor final do objeto
+in vec3 tang;
 
 vec3 expand(vec3 v)
 {
@@ -87,32 +99,36 @@ vec3 expand(vec3 v)
 
 void main()
 {
-    vec3 ambient = material.ambient * fragNormal;// texture(sampler, fragUV).rgb; //Componente da luz ambiente
+    vec3 ambient = material.ambient *tang;/* texture(sampler, fragUV).rgb;*/ //Componente da luz ambiente
     vec3 diffuse = vec3(0.0,0.0,0.0);
     vec3 specular = vec3(0.0,0.0,0.0);
 
     //Normal usada é a de textura de mapa de normal
-    vec3 N = fragNormal;//expand(texture(normalsampler,fragUV).rgb);
+    vec3 N = fragNormal;//normalize(expand(texture(normalsampler,fragUV).rgb));
 
     //Normalizando novamente a luz no espaço do olho
     vec3 L = normalize(light);
 
     //Calcula produto interno entre luz e normal no espaço do olho
-    float iDif = dot(L,N);
+    float iDif = dot(light,N);
 
     //Se certifica que a luz e a normal não são perpendiculares
     if( iDif > 0 )
     {
-        diffuse = iDif * material.diffuse * fragNormal;//texture(sampler, fragUV).rgb; // Calcula componente difusa da luz
+        diffuse = iDif * material.diffuse * tang; /*texture(sampler, fragUV).rgb;*/// Calcula componente difusa da luz
 
-        vec3 V = normalize(-fragPos); // Viewer
+        vec3 V = tanViewer; //normalize(-fragPos); // Viewer
         vec3 H = normalize(L + V);
 
-        float iSpec = pow(max(dot(N,H),0.0),material.shininess);
+        float iSpec = pow(max(dot(N,V),0.0),material.shininess);
         specular = iSpec * material.specular; //Calcula componente especular
     }
 
-    finalColor = ambient + diffuse + specular; //Cor final é a soma das componentes
+    finalColor = ambient + diffuse + specular;
+
+       //float f = lenght(fragUV);
+       //float dxp = dFdx(fragPos);
+       //vec3 dyp = dFdx(vertexPos);
 }
 )";
 
@@ -120,7 +136,7 @@ RenderOpengl::RenderOpengl(QWidget* parent)
     :QOpenGLWidget(parent)
 {
     cam.at = QVector3D(0.f,0.f,0.f);
-    cam.eye =  QVector3D(0.f,0.f,300.f);
+    cam.eye =  QVector3D(0.f,0.f,100.f);
     cam.up = QVector3D(0.f,2.f,0.f);
     cam.zNear = 0.1f;
     cam.zFar  = 1000.f;
@@ -142,23 +158,25 @@ RenderOpengl::~RenderOpengl()
 }
 void RenderOpengl::setFile(std::string fileName)
 {
-    std::vector<int> indexPointsQuad;
-    std::vector<int> indexPointsTriangle;
-    std::vector<int> indexNormalsTriangle;
-    std::vector<int> indexNormalsQuads;
-    std::vector<int> indexTexTriangle;
-    std::vector<int> indexTexQuads;
-    _points.clear();
-    _normals.clear();
-    _texCoords.clear();
-    _indexPoints.clear();
-    _indexNormals.clear();
-    _indexTex.clear();
-//    //readFile(fileName,_points,_normals,_texCoords,indexTexTriangle,indexPointsQuad,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
-    readFile(fileName,_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
-    quadToTriangleMesh(indexPointsQuad, indexPointsTriangle,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
-    organizingData();
-    //createSphere();
+//    std::vector<int> indexPointsQuad;
+//    std::vector<int> indexPointsTriangle;
+//    std::vector<int> indexNormalsTriangle;
+//    std::vector<int> indexNormalsQuads;
+//    std::vector<int> indexTexTriangle;
+//    std::vector<int> indexTexQuads;
+//    _points.clear();
+//    _normals.clear();
+//    _texCoords.clear();
+//    _indexPoints.clear();
+//    _indexNormals.clear();
+//    _indexTex.clear();
+////    //readFile(fileName,_points,_normals,_texCoords,indexTexTriangle,indexPointsQuad,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
+//    readFile(fileName,_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
+//    quadToTriangleMesh(indexPointsQuad, indexPointsTriangle,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
+//    organizingData();
+//    //computeTangents();
+////     printThings();
+    createSphere();
 
 
 }
@@ -169,56 +187,117 @@ int getIndex( int i, int j, int n )
 }
 void RenderOpengl::createSphere()
 {
-    const int n = 100;
-    const int m = 100;
+//    const int n = 100;
+//    const int m = 100;
 
-    const int numTriangles = 2 * n * m;
-    const int numVertices = ( n + 1 ) * ( m + 1 );
+//    const int numTriangles = 2 * n * m;
+//    const int numVertices = ( n + 1 ) * ( m + 1 );
 
-    for( unsigned int i = 0; i <= n; i++ )
-    {
-        for( unsigned int j = 0; j <= m; j++ )
-        {
-            //Atualizar as coordenadas de textura
-            float s = (float) i / n;
-            float t = (float) j / m;
-            _texCoords.push_back(QVector2D(s,t));
+//    for( unsigned int i = 0; i <= n; i++ )
+//    {
+//        for( unsigned int j = 0; j <= m; j++ )
+//        {
+//            //Atualizar as coordenadas de textura
+//            float s = (float) i / n;
+//            float t = (float) j / m;
+//            _texCoords.push_back(QVector2D(s,t));
 
-            //Calcula os parâmetros
-            double theta = 2 * s * M_PI;
-            double phi = t * M_PI;
-            double sinTheta = sin( theta );
-            double cosTheta = cos( theta );
-            double sinPhi = sin( phi );
-            double cosPhi = cos( phi );
+//            //Calcula os parâmetros
+//            double theta = 2 * s * M_PI;
+//            double phi = t * M_PI;
+//            double sinTheta = sin( theta );
+//            double cosTheta = cos( theta );
+//            double sinPhi = sin( phi );
+//            double cosPhi = cos( phi );
 
-            //Calcula os vértices == equacao da esfera
-            _points.push_back( QVector3D(cosTheta * sinPhi,
-                                          cosPhi,
-                                          sinTheta * sinPhi) );
-        }
-    }
+//            //Calcula os vértices == equacao da esfera
+//            _points.push_back( QVector3D(cosTheta * sinPhi,
+//                                          cosPhi,
+//                                          sinTheta * sinPhi) );
+//            _tangents.push_back(QVector3D(-sin(theta)*sin(phi)*2*M_PI,
+//                                          0,
+//                                          cos(theta)*sin(phi)*2*M_PI));
 
-    _normals = _points;
+//        }
+//    }
 
-    _indexPoints.resize(numTriangles*3);
+//    _normals = _points;
 
-    //Preenche o vetor com a triangulação
-    unsigned int k = 0;
-    for( unsigned int i = 0; i < n; i++ )
-    {
-        for( unsigned int j = 0; j < m; j++ )
-        {
-            _indexPoints[ k++ ] = getIndex( i + 1, j, n );
-            _indexPoints[ k++ ] = getIndex( i + 1, j + 1, n );
-            _indexPoints[ k++ ] = getIndex( i, j, n );
+//    _indexPoints.resize(numTriangles*3);
+
+//    //Preenche o vetor com a triangulação
+//    unsigned int k = 0;
+//    for( unsigned int i = 0; i < n; i++ )
+//    {
+//        for( unsigned int j = 0; j < m; j++ )
+//        {
+//            _indexPoints[ k++ ] = getIndex( i + 1, j, n );
+//            _indexPoints[ k++ ] = getIndex( i + 1, j + 1, n );
+//            _indexPoints[ k++ ] = getIndex( i, j, n );
 
 
-            _indexPoints[ k++ ] = getIndex( i + 1, j + 1, n );
-            _indexPoints[ k++ ] = getIndex( i, j + 1, n );
-            _indexPoints[ k++ ] = getIndex( i, j, n );
-        }
-    }
+//            _indexPoints[ k++ ] = getIndex( i + 1, j + 1, n );
+//            _indexPoints[ k++ ] = getIndex( i, j + 1, n );
+//            _indexPoints[ k++ ] = getIndex( i, j, n );
+//        }
+//    }
+
+//Outra esfera
+
+            std::vector<int> indices;
+
+            float raio = 0.5;
+            unsigned int rings = 50;
+            unsigned int sectors = 50;
+
+            float const R = 1/(float)(rings-1); // 0 a rings
+            float const S = 1/(float)(sectors-1); // 0 a sectors
+            unsigned r, s;
+
+            for(r = 0; r < rings; r++)
+                for(s = 0; s < sectors; s++) {
+
+                    float phi = M_PI * r * R;
+                    float theta = 2 * M_PI * s * S;
+
+                    float const x = cos( theta ) * sin( phi );
+                    float const y = cos( phi );
+                    float const z = sin( theta ) * sin ( phi );
+
+                    //Textura s,t
+                    _texCoords.push_back(QVector2D(s*S,r*R));
+
+                    ///Vertex position
+                    _points.push_back(QVector3D(x*raio,y*raio,z*raio));
+
+                    ///Derivada de x,y,z em relação a s - Vetor tangente
+                    float tangx = -sin(theta)*sin(phi)*2*M_PI*S;
+                    float tangy =  0;
+                    float tangz = cos(theta)*sin(phi)*2*M_PI*S;
+
+                    _tangents.push_back(QVector3D(tangx,tangy,tangz));
+                    ///Vetor Normal
+                }
+            _normals = _points;
+
+            //std::vector<GLushort>::iterator i = indicesSphere.begin();
+            unsigned int k = 0;
+            indices.resize(rings * sectors * 4);
+            int i = 0;
+            for(r = 0; r < rings-1; r++) for(s = 0; s < sectors-1; s++)
+            {
+                indices[i] = (r * sectors + s);
+                indices[i+1] =  r * sectors + (s+1);
+                indices[i+2] = (r+1) * sectors + (s+1);
+                indices[i+3] = (r+1) * sectors + s;
+                i = i+4;
+            }
+            std::vector<int> indexPointsTriangle;
+            std::vector<int> indexNormalsTriangle;
+            std::vector<int> indexTexTriangle;
+
+            quadToTriangleMesh(indices, indexPointsTriangle,indexNormalsTriangle,indexTexTriangle,indices,indices);
+
 }
 
 
@@ -287,6 +366,7 @@ void RenderOpengl::quadToTriangleMesh(std::vector<int>& indexPointsQuad, std::ve
         _indexNormals.push_back(indexNormalsTriangle[i]);
         _indexTex.push_back(indexTexTriangle[i]);
     }
+
     printThings();
 }
 
@@ -323,6 +403,7 @@ void RenderOpengl::initializeGL()
     makeCurrent();
 
     glEnable(GL_DEPTH_TEST); //Não acreditooooo
+    glDepthFunc(GL_LESS);
     glClearColor(0,0,0,1);
     glViewport(0,0,width(),height());
 
@@ -334,8 +415,11 @@ void RenderOpengl::initializeGL()
     _program = new QOpenGLShaderProgram();
 
     //Adicionando shaders ao programa
-    _program->addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShaderSource);
-    _program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource);
+//    _program->addShaderFromSourceCode(QOpenGLShader::Vertex, vertexShaderSource);
+//    _program->addShaderFromSourceCode(QOpenGLShader::Fragment, fragmentShaderSource);
+
+    _program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/vertexshader.glsl");
+    _program->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/fragmentshader.glsl");
 
     //Linka shaders que foram adicionados ao programa
     _program->link();
@@ -345,8 +429,8 @@ void RenderOpengl::initializeGL()
         std::cout<<"Problemas ao linkar shaders"<<std::endl;
     }
     //Liga o programa ao atual contexto
-    //setFile("../sphere/sphere.obj");
-    setFile("../golfball/golfball.obj");
+    setFile("../sphere/sphere.obj");
+    //setFile("../golfball/golfball.obj");
     //setFile("../earth.obj");
    //setFile("../stones/stones.obj");
 
@@ -355,7 +439,7 @@ void RenderOpengl::initializeGL()
     createVAO();
 
     //Criando textura para colocar no meu cubo
-    //createTexture("../golfball/golfball.png");
+    createTexture("../golfball/golfball.png");
     //createTexture("../stones/stones.jpg");
 
     createNormalMapTexture("../golfball/golfball.png");
@@ -385,10 +469,15 @@ void RenderOpengl::printThings()
 //    }
 
 
-    printf("Indices: \n");
-    for(int i = 0; i< _indexPoints.size(); i ++)
+//    printf("Indices: \n");
+//    for(int i = 0; i< _indexPoints.size(); i ++)
+//    {
+//        printf( "%d ",_indexPoints[i]);
+//    }
+    printf("Tangentes: \n");
+    for(int i = 0; i< _tangents.size(); i ++)
     {
-        printf( "%d ",_indexPoints[i]);
+        printf( "%d ",_tangents[i]);
     }
 }
 
@@ -500,7 +589,7 @@ void RenderOpengl::paintGL()
 //                _model[3][0],_model[3][1],_model[3][2],_model[3][3]);
     _program->setUniformValue("normalMatrix", mv.inverted().transposed());
     //Variáveis de material e luz
-    _program->setUniformValue("lightPos", /*cam.eye*/v*QVector3D(5,5,-5));
+    _program->setUniformValue("lightPos", cam.eye/*v*QVector3D(5,5,-5)*/);
 
     //Bola
         _program->setUniformValue("material.ambient", QVector3D(0.3f,0.3f,0.3f));
@@ -615,7 +704,7 @@ void RenderOpengl::mousePressEvent(QMouseEvent *event)
     //Fit
     if(event->button() == Qt::MiddleButton)
     {
-          cam.eye = QVector3D(0.f,0.f,20.f);
+          cam.eye = QVector3D(0.f,20.f,20.f);
           _model= glm::mat4x4(1.f);
     }
 
@@ -659,52 +748,185 @@ void RenderOpengl::wheelEvent(QWheelEvent *event)
 
 void RenderOpengl::computeTangents()
 {
-    for ( int i=0; i<_indexPoints.size(); i++)
-    {
+//    _tangents.resize(_points.size());
+//    _bitangents.resize(_points.size());
+//    for ( int i=0; i<_indexPoints.size()/3; i++)
+//    {
 
+//            int id0 = _indexPoints[3*i];
+//            int id1 = _indexPoints[3*i + 1];
+//            int id2 = _indexPoints[3*i + 2];
+
+//            int idv0 = _indexTex[3*i];
+//            int idv1 = _indexTex[3*i + 1];
+//            int idv2 = _indexTex[3*i + 2];
+
+//            // Shortcuts for vertices
+//            QVector3D v0 = _points[id0];
+//            QVector3D v1 = _points[id1];
+//            QVector3D v2 = _points[id2];
+
+//            // Shortcuts for UVs
+//            QVector2D uv0 = _texCoords[id0];
+//            QVector2D uv1 = _texCoords[id1];
+//            QVector2D uv2 = _texCoords[id2];
+
+//            // Edges of the triangle : position delta
+//            QVector3D deltaPos1 = v1-v0;
+//            QVector3D deltaPos2 = v2-v0;
+
+//            // UV delta
+//            QVector2D deltaUV1 = uv1-uv0;
+//            QVector2D deltaUV2 = uv2-uv0;
+//    //We can now use our formula to compute the tangent and the bitangent :
+
+//            float r = 1.0f / (deltaUV1.x() * deltaUV2.y() - deltaUV1.y() * deltaUV2.x());
+//            QVector3D tangent = (deltaPos1 * deltaUV2.y()   - deltaPos2 * deltaUV1.y())*r;
+//            QVector3D bitangent = (deltaPos2 * deltaUV1.x()   - deltaPos1 * deltaUV2.x())*r;
+//   // Finally, we fill the *tangents *and *bitangents *buffers. Remember, these buffers are not indexed yet, so each vertex has its own copy.
+
+//            // Set the same tangent for all three vertices of the triangle.
+//            // They will be merged later, in vboindexer.cpp
+////            _tangents.push_back(tangent);
+////            _tangents.push_back(tangent);
+////            _tangents.push_back(tangent);
+//            _tangents[id0] = tangent;
+//            _tangents[id1] = tangent;
+//            _tangents[id2] = tangent;
+
+//            // Same thing for bitangents
+////            _bitangents.push_back(bitangent);
+////            _bitangents.push_back(bitangent);
+////            _bitangents.push_back(bitangent);
+
+////            _bitangents[id0] = bitangent;
+////            _bitangents[id1] = bitangent;
+////            _bitangents[id2] = bitangent;
+
+//    }
+
+    //Outra abordagem
+//    std::vector<QVector3D> tanA;
+//    std::vector<QVector3D> tanB;
+//    tanA.resize(_points.size());
+//    tanB.resize(_points.size());
+//    for(int i = 0; i< tanA.size();i++)
+//    {
+//        tanA[i] = QVector3D(0,0,0);
+//        tanB[i] = QVector3D(0,0,0);
+//    }
+
+//    _tangents.resize(_points.size());
+//    for (size_t i = 0; i < _indexPoints.size()/3; i++)
+//    {
+//            size_t i0 = _indexPoints[3*i];
+//            size_t i1 = _indexPoints[3*i + 1];
+//            size_t i2 = _indexPoints[3*i + 2];
+
+//            QVector3D pos0 = _points[i0];
+//            QVector3D pos1 = _points[i1];
+//            QVector3D pos2 = _points[i2];
+
+//            QVector2D tex0 = _texCoords[i0];
+//            QVector2D tex1 = _texCoords[i1];
+//            QVector2D tex2 = _texCoords[i2];
+
+//            QVector3D edge1 = pos1 - pos0;
+//            QVector3D edge2 = pos2 - pos0;
+
+//            QVector2D uv1 = tex1 - tex0;
+//            QVector2D uv2 = tex2 - tex0;
+
+//            float r = 1.0f / (uv1.x() * uv2.y() - uv1.y() * uv2.x());
+
+//            QVector3D tangent(
+//                ((edge1.x() * uv2.y()) - (edge2.x() * uv1.y())) * r,
+//                ((edge1.y() * uv2.y()) - (edge2.y() * uv1.y())) * r,
+//                ((edge1.z() * uv2.y()) - (edge2.z() * uv1.y())) * r
+//            );
+
+//            QVector3D bitangent(
+//                ((edge1.x() * uv2.x()) - (edge2.x() * uv1.x())) * r,
+//                ((edge1.y() * uv2.x()) - (edge2.y() * uv1.x())) * r,
+//                ((edge1.z() * uv2.x()) - (edge2.z() * uv1.x())) * r
+//            );
+
+//            tanA[i0] += tangent;
+//            tanA[i1] += tangent;
+//            tanA[i2] += tangent;
+
+//            tanB[i0] += bitangent;
+//            tanB[i1] += bitangent;
+//            tanB[i2] += bitangent;
+//        }
+
+//        // (2)
+//        for (size_t i = 0; i < _points.size(); i++)
+//        {
+//            QVector3D n = _normals[i];
+//            QVector3D t0 = tanA[i];
+//            QVector3D t1 = tanB[i];
+
+//            QVector3D t = t0 - (n * QVector3D::dotProduct(n, t0));
+//            t.normalize();
+//            _tangents[i] = QVector3D(t.x(), t.y(), t.z());
+//        }
+
+        ///Outra
+    std::vector<QVector3D> auxTang;
+        for(int i = 0; i<_indexPoints.size()/3;i++)
+        {
             int id0 = _indexPoints[3*i];
             int id1 = _indexPoints[3*i + 1];
             int id2 = _indexPoints[3*i + 2];
+            QVector3D Gx = QVector3D(_points[id1].x(),_texCoords[id1].y(),_texCoords[id1].y());
+            QVector3D Hx = QVector3D(_points[id0].x(),_texCoords[id0].x(),_texCoords[id0].y());
+            QVector3D Rx = QVector3D(_points[id2].x(),_texCoords[id2].x(),_texCoords[id2].y());
 
-            int idv0 = _indexTex[3*i];
-            int idv1 = _indexTex[3*i + 1];
-            int idv2 = _indexTex[3*i + 2];
+            QVector3D axbxcx = QVector3D::crossProduct((Gx - Hx),(Rx-Hx));
+            //float dx = QVector3D::dotProduct(-axbxcx,H);
 
-            // Shortcuts for vertices
-            QVector3D v0 = _points[id0];
-            QVector3D v1 = _points[id1];
-            QVector3D v2 = _points[id2];
+            float ax = axbxcx.x();
+            float bx = axbxcx.y();
+            float cx = axbxcx.z();
 
-            // Shortcuts for UVs
-            QVector2D uv0 = _texCoords[idv0];
-            QVector2D uv1 = _texCoords[idv1];
-            QVector2D uv2 = _texCoords[idv2];
+            float tx = -bx/ax;
 
-            // Edges of the triangle : position delta
-            QVector3D deltaPos1 = v1-v0;
-            QVector3D deltaPos2 = v2-v0;
+            QVector3D Gy = QVector3D(_points[id1].y(),_texCoords[id1].x(),_texCoords[id1].y());
+            QVector3D Hy = QVector3D(_points[id0].y(),_texCoords[id0].x(),_texCoords[id0].y());
+            QVector3D Ry = QVector3D(_points[id2].y(),_texCoords[id2].x(),_texCoords[id2].y());
 
-            // UV delta
-            QVector2D deltaUV1 = uv1-uv0;
-            QVector2D deltaUV2 = uv2-uv0;
-    //We can now use our formula to compute the tangent and the bitangent :
+            QVector3D aybycy = QVector3D::crossProduct((Gy - Hy),(Ry-Hy));
+            //float dx = QVector3D::dotProduct(-axbxcx,H);
 
-            float r = 1.0f / (deltaUV1.x() * deltaUV2.y() - deltaUV1.y() * deltaUV2.x());
-            QVector3D tangent = (deltaPos1 * deltaUV2.y()   - deltaPos2 * deltaUV1.y())*r;
-            QVector3D bitangent = (deltaPos2 * deltaUV1.x()   - deltaPos1 * deltaUV2.x())*r;
-   // Finally, we fill the *tangents *and *bitangents *buffers. Remember, these buffers are not indexed yet, so each vertex has its own copy.
+            float ay = aybycy.x();
+            float by = aybycy.y();
+            float cy = aybycy.z();
 
-            // Set the same tangent for all three vertices of the triangle.
-            // They will be merged later, in vboindexer.cpp
-            _tangents.push_back(tangent);
-            _tangents.push_back(tangent);
-            _tangents.push_back(tangent);
+            float ty = -by/ay;
 
-            // Same thing for bitangents
-            _bitangents.push_back(bitangent);
-            _bitangents.push_back(bitangent);
-            _bitangents.push_back(bitangent);
-    }
+            QVector3D Gz = QVector3D(_points[id1].z(),_texCoords[id1].x(),_texCoords[id1].y());
+            QVector3D Hz = QVector3D(_points[id0].z(),_texCoords[id0].x(),_texCoords[id0].y());
+            QVector3D Rz = QVector3D(_points[id2].z(),_texCoords[id2].x(),_texCoords[id2].y());
 
+            QVector3D azbzcz = QVector3D::crossProduct((Gz - Hz),(Rz-Hz));
+            //float dx = QVector3D::dotProduct(-axbxcx,H);
+
+            float az = azbzcz.x();
+            float bz = azbzcz.y();
+            float cz = azbzcz.z();
+
+            float tz = -bz/az;
+
+            _tangents.push_back(QVector3D(tx,ty,tz));
+            _tangents.push_back(QVector3D(tx,ty,tz));
+            _tangents.push_back(QVector3D(tx,ty,tz));
+        }
+//        _tangents.resize(_normals.size());
+//        for(int i = 0; i< _indexPoints.size(); i++)
+//        {
+//            int id = _indexPoints[i];
+//            _tangents[id] = auxTang[i];
+//        }
 
 }
