@@ -15,12 +15,10 @@
     uniform vec3 lightPos; // Posição da luz em coordenada do olho
 
     //Variáveis out
-    out vec3 fragPos; // Posição do vértice passada pro fragment
-    out vec3 fragNormal; // Normal do vértice passada pro fragment
     out vec2 fragUV; // Coordenada de textura passada pro fragment
-    out vec3 light; // Posição da luz passada pro fragment
+    out vec3 light; // Posição da luz passada pro fragment no espaco tangente
     out vec3 tanViewer; //Viewer no espaço tangente
-    out vec3 tang;
+
     void main()
     {
 
@@ -28,10 +26,10 @@
         gl_Position = mvp * vec4( vertexPos, 1 );
 
         //Posição do vétice no espaço do olho
-        fragPos = ( mv * vec4( vertexPos, 1 ) ).xyz;
+        vec3 fragPos = ( mv * vec4( vertexPos, 1 ) ).xyz;
 
         //Posição da normal no espaço do olho
-        fragNormal = ( normalMatrix * vec4( vertexNormal, 0 ) ).xyz;
+        vec3 fragNormal = ( normalMatrix * vec4( vertexNormal, 0 ) ).xyz;
 
         //Posição da tangente no espaço do olho
         vec3 tangentVertexEye = ( normalMatrix * vec4( tangent, 0 ) ).xyz;
@@ -45,9 +43,10 @@
         //Só passando coordenadas de textura pro fragment
         fragUV = vertexTexCoord ;
 
-        //Colocando luz no espaço tangente
+        //Colocando luz no espaco tangente
         light = rotation*normalize(lightPos - fragPos);
+
+        //Viewer no espaco tangente
         tanViewer =rotation*normalize(-fragPos);
 
-        tang = tangent;
     }

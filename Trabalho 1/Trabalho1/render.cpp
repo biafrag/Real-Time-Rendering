@@ -25,16 +25,9 @@ void Render::setFile(std::string fileName)
 {
     std::vector<int> indexPointsQuad;
     std::vector<int> indexPointsTriangle;
-    _points.clear();
-    _normals.clear();
-    _texCoords.clear();
-    _indexPoints.clear();
-    _indexNormals.clear();
-    _indexTex.clear();
     readFile(fileName,_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,_indexNormals,_indexTex);
     quadToTriangleMesh(indexPointsQuad, indexPointsTriangle);
     computeTangent();
-    _program->bind();
 }
 
 
@@ -96,17 +89,14 @@ void Render::initializeGL()
         std::cout<<"Problemas ao linkar shaders"<<std::endl;
     }
     //Liga o programa ao atual contexto
-   // setFile("../golfball/golfball.obj");
-    //setFile("../sphere/sphere.obj");
    setFile("../stones/stones.obj");
 
     _program->bind();
 
     createVAO();
 
-    //Criando textura para colocar no meu cubo
+    //Criando textura difusa e normal map
      createTexture("../stones/stones.jpg");
-
     createNormalMapTexture("../stones/stones_norm.jpg");
 
     GLint textureLocation = glGetUniformLocation(_program->programId(), "sampler");
@@ -114,8 +104,6 @@ void Render::initializeGL()
 
     GLint normalMap = glGetUniformLocation(_program->programId(), "normalsampler");
     glUniform1i(normalMap,  1);
-
-    printf("Tamanho do vetor de pontos: %d  Tamanho do vetor de tangente: %d Tamanho de normal: %d",_points.size(),_tangents.size(),_normals.size());
 
     printThings();
 }
@@ -247,11 +235,9 @@ void Render::paintGL()
     glEnable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _textureID);
-//    _program->setUniformValue("sampler", 0);
 
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _normalMap);
-//    _program->setUniformValue("normalsampler", 0);
 
     //Passando as variáveis uniformes para os shaders
     //model-view : Passa para espaço do olho
@@ -262,17 +248,13 @@ void Render::paintGL()
     _program->setUniformValue("normalMatrix", mv.inverted().transposed());
     //Variáveis de material e luz
     _program->setUniformValue("lightPos", cam.eye);
-    //Imagem 2D
-//    _program->setUniformValue("material.ambient", QVector3D(0.1f,0.1f,0.1f));
-//    _program->setUniformValue("material.diffuse", QVector3D(1.0f,1.0f,1.0f));
-//    _program->setUniformValue("material.specular", QVector3D(0.f,0.3f,0.3f));
-//    _program->setUniformValue("material.shininess", 100.0f);
-    //Bola
-        _program->setUniformValue("material.ambient", QVector3D(0.2f,0.2f,0.2f));
-        _program->setUniformValue("material.diffuse", QVector3D(0.8f,0.8f,0.8f));
+
+    //2DImage
+        _program->setUniformValue("material.ambient", QVector3D(0.1f,0.1f,0.1f));
+        _program->setUniformValue("material.diffuse", QVector3D(0.9f,0.9f,0.9f));
         _program->setUniformValue("material.specular", QVector3D(0.3f,0.3f,0.3f));
         _program->setUniformValue("material.shininess", 100.0f);
-        _program->setUniformValue("color", QVector3D(1.0,1.0,1.0));
+        _program->setUniformValue("hasDT", true);
 
     //Desenhando os triângulos que formam o cubo
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexPoints.size()), GL_UNSIGNED_INT, nullptr);
@@ -281,10 +263,71 @@ void Render::paintGL()
 
 void Render::computeTangent()
 {
-    for ( int i=0; i<_points.size(); i++)
+    std::vector<QVector3D> tanA;
+    std::vector<QVector3D> tanB;
+    tanA.resize(_points.size());
+    tanB.resize(_points.size());
+    for(int i = 0; i< tanA.size();i++)
     {
-        _tangents.push_back(QVector3D (1,0,0));
+        tanA[i] = QVector3D(0,0,0);
+        tanB[i] = QVector3D(0,0,0);
     }
+
+    _tangents.resize(_points.size());
+    for (size_t i = 0; i < _indexPoints.size()/3; i++)
+    {
+            size_t i0 = _indexPoints[3*i];
+            size_t i1 = _indexPoints[3*i + 1];
+            size_t i2 = _indexPoints[3*i + 2];
+
+            QVector3D pos0 = _points[i0];
+            QVector3D pos1 = _points[i1];
+            QVector3D pos2 = _points[i2];
+
+            QVector2D tex0 = _texCoords[i0];
+            QVector2D tex1 = _texCoords[i1];
+            QVector2D tex2 = _texCoords[i2];
+
+            QVector3D edge1 = pos1 - pos0;
+            QVector3D edge2 = pos2 - pos0;
+
+            QVector2D uv1 = tex1 - tex0;
+            QVector2D uv2 = tex2 - tex0;
+
+            float r = 1.0f / (uv1.x() * uv2.y() - uv1.y() * uv2.x());
+
+            QVector3D tangent(
+                ((edge1.x() * uv2.y()) - (edge2.x() * uv1.y())) * r,
+                ((edge1.y() * uv2.y()) - (edge2.y() * uv1.y())) * r,
+                ((edge1.z() * uv2.y()) - (edge2.z() * uv1.y())) * r
+            );
+
+            QVector3D bitangent(
+                ((edge1.x() * uv2.x()) - (edge2.x() * uv1.x())) * r,
+                ((edge1.y() * uv2.x()) - (edge2.y() * uv1.x())) * r,
+                ((edge1.z() * uv2.x()) - (edge2.z() * uv1.x())) * r
+            );
+
+            tanA[i0] += tangent;
+            tanA[i1] += tangent;
+            tanA[i2] += tangent;
+
+            tanB[i0] += bitangent;
+            tanB[i1] += bitangent;
+            tanB[i2] += bitangent;
+        }
+
+        // (2)
+        for (size_t i = 0; i < _points.size(); i++)
+        {
+            QVector3D n = _normals[i];
+            QVector3D t0 = tanA[i];
+            QVector3D t1 = tanB[i];
+
+            QVector3D t = t0 - (n * QVector3D::dotProduct(n, t0));
+            t.normalize();
+            _tangents[i] = QVector3D(t.x(), t.y(), t.z());
+        }
 }
 
 void Render::createVAO()
@@ -314,13 +357,6 @@ void Render::createVAO()
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(2);
 
-    //Criando buffer de tangentes
-    glGenBuffers(1, &_bitangentBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, _bitangentBuffer);
-    glBufferData(GL_ARRAY_BUFFER, _bitangents.size()*sizeof(QVector3D), &_bitangents[0], GL_STATIC_DRAW);
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glEnableVertexAttribArray(3);
-
     //Criando buffers de textura
     glGenBuffers(1, &_texCoordsBuffer);
     glBindBuffer(GL_ARRAY_BUFFER,_texCoordsBuffer);
@@ -337,10 +373,9 @@ void Render::createVAO()
 
 }
 
-
+//ArcBall
 void Render::mousePressEvent(QMouseEvent *event)
 {
-    printf("Clicou\n");
     if(mousepress==false && event->button() == Qt::LeftButton)
     {
         mousepress=true;
@@ -412,6 +447,7 @@ void Render::mouseMoveEvent(QMouseEvent *event)
     update();
 }
 
+//Outra forma que mexe a camera
 void Render::keyPressEvent(QKeyEvent* event)
 {
     if(event->key() == Qt::Key_A)
