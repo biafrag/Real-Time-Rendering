@@ -22,6 +22,7 @@ out vec3 finalColor; // Cor final do objeto
 //uniform sampler2D gPosition;
 //uniform sampler2D gNormal;
 //uniform sampler2D gDifusa;
+uniform sampler2D gDepth;
 
 void main()
 {
@@ -75,6 +76,7 @@ void main()
 //        specular = iSpec * Especular;
 //    }
 
-    finalColor = vec3(0.5,0.5,1);
+   // finalColor = texture(gDepth, UV).rgb;
+    finalColor = vec3(0,1,0.5);
 
 }

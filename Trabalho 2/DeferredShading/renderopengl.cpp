@@ -233,32 +233,6 @@ void RenderOpengl::initializeGL()
     glEnable( GL_LINE_SMOOTH );
     glLineWidth(1.0f);
 
-    _programGB = new QOpenGLShaderProgram();
-
-    //Adicionando shaders ao programa
-
-    _programGB->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/GBvertexshader.glsl");
-    _programGB->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/GBfragmentshader.glsl");
-
-    //Linka shaders que foram adicionados ao programa
-    _programGB->link();
-
-    if (!_programGB->isLinked())
-    {
-        std::cout<<"Problemas ao linkar shaders de Gbuffer"<<std::endl;
-    }
-    //Liga o programa ao atual contexto
-
-    setFile("../golfball/golfball.obj");
-
-    _programGB->bind();
-
-    createVAO();
-
-    createNormalMapTexture("../golfball/golfball.png");
-
-    createFrameBuffer();
-
     _programQuad = new QOpenGLShaderProgram();
     //Adicionando shaders ao programa
 
@@ -284,7 +258,31 @@ void RenderOpengl::initializeGL()
     glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(5);
 
+    _programGB = new QOpenGLShaderProgram();
 
+    //Adicionando shaders ao programa
+
+    _programGB->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/GBvertexshader.glsl");
+    _programGB->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/GBfragmentshader.glsl");
+
+    //Linka shaders que foram adicionados ao programa
+    _programGB->link();
+
+    if (!_programGB->isLinked())
+    {
+        std::cout<<"Problemas ao linkar shaders de Gbuffer"<<std::endl;
+    }
+    //Liga o programa ao atual contexto
+
+    setFile("../golfball/golfball.obj");
+
+    _programGB->bind();
+
+    createVAO();
+
+    createNormalMapTexture("../golfball/golfball.png");
+
+    createFrameBuffer();
 
 }
 void RenderOpengl::printThings()
@@ -371,9 +369,11 @@ void RenderOpengl::createNormalMapTexture(const std::string& imagePath)
 void RenderOpengl::paintGL()
 {
 
-    //glBindFramebuffer(GL_FRAMEBUFFER, _gBuffer);
-    //Dando bind no programa e no vao
-    _programQuad->bind();
+    //PRIMEIRA PASSADA
+    _programGB->bind();
+    _vao.bind();
+    glBindFramebuffer(GL_FRAMEBUFFER, _gBuffer);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //Definindo matriz view e projection
      _view.setToIdentity();
@@ -395,75 +395,46 @@ void RenderOpengl::paintGL()
     QMatrix4x4 mv = v*m;
     QMatrix4x4 mvp =p*mv;
 
-    //Ativar e linkar a textura
-//    glActiveTexture(GL_TEXTURE0);
-//    glBindTexture(GL_TEXTURE_2D, _textureID);
-//    _program->setUniformValue("sampler", 0);
-
-//    glActiveTexture(GL_TEXTURE1);
-//    glBindTexture(GL_TEXTURE_2D, _normalMap);
-//    _program->setUniformValue("normalsampler", 0);
-
-    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _gPosition);
-    glActiveTexture(GL_TEXTURE1);
-    _programQuad->setUniformValue("gPosition", 0);
-    glBindTexture(GL_TEXTURE_2D, _gNormal);
-    glActiveTexture(GL_TEXTURE2);
-    _programQuad->setUniformValue("gNormal", 0);
-    glBindTexture(GL_TEXTURE_2D, _gAmbiente);
-    glActiveTexture(GL_TEXTURE3);
-    _programQuad->setUniformValue("gAmbiente", 0);
-    glBindTexture(GL_TEXTURE_2D, _gDifusa);
-    glActiveTexture(GL_TEXTURE4);
-    _programQuad->setUniformValue("gDifusa", 0);
-    glBindTexture(GL_TEXTURE_2D, _gSpecShi);
-    glActiveTexture(GL_TEXTURE5);
-    _programQuad->setUniformValue("gSpecShi", 0);
-    glBindTexture(GL_TEXTURE_2D, _gTexCoords);
-    _programQuad->setUniformValue("gTexCoords", 0);
-
-//    GLint textureLocation = glGetUniformLocation(_program->programId(), "sampler");
-//    GLint normalMapLocation = glGetUniformLocation(_program->programId(), "normalsampler");
-    GLint gPositionLocation = glGetUniformLocation(_programQuad->programId(), "gPosition");
-    GLint gNormalLocation = glGetUniformLocation(_programQuad->programId(), "gNormal");
-    GLint gAmbienteLocation = glGetUniformLocation(_programQuad->programId(), "gAmbiente");
-    GLint gDifusaLocation = glGetUniformLocation(_programQuad->programId(), "gDifusa");
-    GLint gSpecShiLocation = glGetUniformLocation(_programQuad->programId(), "gSpecShi");
-    GLint gTexCoordsLocation = glGetUniformLocation(_programQuad->programId(), "gTexCoords");
-
-//    glUniform1i(textureLocation, 0);
-//    glUniform1i(normalMapLocation,  1);
-    glUniform1i(gPositionLocation, 0);
-    glUniform1i(gNormalLocation,  1);
-    glUniform1i(gAmbienteLocation, 2);
-    glUniform1i(gDifusaLocation,  3);
-    glUniform1i(gSpecShiLocation, 4);
-    glUniform1i(gTexCoordsLocation,  5);
-
-//    _program->bind();
-//    _vao.bind();
     //Passando as variáveis uniformes para os shaders
     //model-view : Passa para espaço do olho
-//    _programGB->setUniformValue("mv", mv);
+    _programGB->setUniformValue("mv", mv);
 //    //model-view : Passa para espaço de projeção
-    _programQuad->setUniformValue("mvp", mvp);
+    _programGB->setUniformValue("mvp", mvp);
 //    //inversa transposta da model-view
-//    _programGB->setUniformValue("normalMatrix", mv.inverted().transposed());
+    _programGB->setUniformValue("normalMatrix", mv.inverted().transposed());
 //    //Variáveis de material e luz
-//    _programGB->setUniformValue("lightPos", v * cam.eye/*v*QVector3D(5,5,-5)*/);
+    _programGB->setUniformValue("lightPos", v * cam.eye/*v*QVector3D(5,5,-5)*/);
 
     //_programQuad->setUniformValue("hasDT", false);
 
     //Bola
-//    _programGB->setUniformValue("material.ambient", QVector3D(0.2f,0.2f,0.2f));
-//    _programGB->setUniformValue("material.diffuse", QVector3D(0.8f,0.8f,0.8f));
-//    _programGB->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
-//    _programGB->setUniformValue("material.shininess", 100.0f);
+    _programGB->setUniformValue("material.ambient", QVector3D(0.2f,0.2f,0.2f));
+    _programGB->setUniformValue("material.diffuse", QVector3D(0.8f,0.8f,0.8f));
+    _programGB->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
+    _programGB->setUniformValue("material.shininess", 100.0f);
+
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexPoints.size()), GL_UNSIGNED_INT, nullptr);
+
+
+    //SEGUNDA PASSADA
+    //Dando bind no programa e no vao
+    _programQuad->bind();
+    _vao2.bind();
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glViewport(0,0,cam.width,cam.height);
+
+    //Ativar e linkar a textura
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _gDepth);
+    _programQuad->setUniformValue("gDepth", 0);
+
+    GLint gDepthLocation = glGetUniformLocation(_programQuad->programId(), "gDepth");
+
+    glUniform1i(gDepthLocation,  0);
+
 
     //Desenhando os triângulos que formam o cubo
-    //glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexPoints.size()), GL_UNSIGNED_INT, nullptr);
     glDrawArrays(GL_TRIANGLES, 0, (int)_pointsScreen.size());
     update();
 }
@@ -763,20 +734,23 @@ void RenderOpengl::createFrameBuffer()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, _gTexCoords, 0);
 
+
+    GLenum attachments[1] = { GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1,attachments);
+
     //Buffer de profundidade
+    glGenTextures(1, &_gDepth);
     glBindTexture(GL_TEXTURE_2D, _gDepth);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, cam.width, cam.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
                   NULL);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _gDepth, 0);
 
-
-    GLenum attachments[7] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4,GL_COLOR_ATTACHMENT5, GL_DEPTH_ATTACHMENT};
-    glDrawBuffers(7,attachments);
-
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
         printf("Erro no frame buffer\n");
     }
+
+    glBindFramebuffer(GL_FRAMEBUFFER, _gBuffer);
 
 }
 
