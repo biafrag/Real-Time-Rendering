@@ -247,7 +247,7 @@ void Render::paintGL()
     //inversa transposta da model-view
     _program->setUniformValue("normalMatrix", mv.inverted().transposed());
     //Variáveis de material e luz
-    _program->setUniformValue("lightPos", cam.eye);
+    _program->setUniformValue("lightPos", v * cam.eye);
 
     //2DImage
         _program->setUniformValue("material.ambient", QVector3D(0.1f,0.1f,0.1f));
@@ -388,7 +388,7 @@ void Render::mousePressEvent(QMouseEvent *event)
     //Fit
     if(event->button() == Qt::MiddleButton)
     {
-          cam.eye = QVector3D(0.f,20.f,20.f);
+          cam.eye = QVector3D(0.f,0.f,90.f);
           _model= glm::mat4x4(1.f);
     }
 
@@ -476,7 +476,7 @@ void Render::keyPressEvent(QKeyEvent* event)
     }
     else if (event->key() == Qt::Key_F)
     {
-        cam.eye = QVector3D(0.f,0.f,300.f);
+        cam.eye = QVector3D(0.f,0.f,90.f);
     }
     update();
 }

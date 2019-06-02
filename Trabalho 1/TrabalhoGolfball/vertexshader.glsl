@@ -47,6 +47,6 @@
         light = rotation*normalize(lightPos - fragPos);
 
         //Viewer no espaco tangente
-        tanViewer =rotation*normalize(-fragPos);
+        tanViewer = rotation*normalize(-fragPos);
 
     }

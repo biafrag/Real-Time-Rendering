@@ -11,9 +11,9 @@ struct Material //Propriedades do material
 uniform Material material;
 
 //Variaveis de entrada
-in vec2 fragUV;
-in vec3 light;
-in vec3 tanViewer;
+in vec2 fragUV; //Coordenada de textura
+in vec3 light; //Posição da luz no espaço tangente
+in vec3 tanViewer; // Posição do viewer no espaço tangente
 
 uniform sampler2D sampler; //Textura difusa
 uniform sampler2D normalsampler; // Textura de mapa de normal
@@ -27,7 +27,7 @@ vec3 expand(vec3 v)
 
 void main()
 {
-    vec3 ambient = material.ambient *vec3(1,1,1);//Componente da luz ambiente
+    vec3 ambient = material.ambient;//Componente da luz ambiente
     vec3 specular = vec3(0.0,0.0,0.0);
 
     //Normal usada eh a de textura de mapa de normal
@@ -55,9 +55,11 @@ void main()
     {
         //Viewer
         vec3 V = tanViewer;
+
+        //HalfVector
         vec3 H = normalize(L + V);
 
-        float iSpec = pow(max(dot(N,V),0.0),material.shininess);
+        float iSpec = pow(max(dot(N,H),0.0),material.shininess);
 
         //Calcula componente especular
         specular = iSpec * material.specular;

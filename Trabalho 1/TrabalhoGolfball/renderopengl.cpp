@@ -615,6 +615,7 @@ void RenderOpengl::computeTangents()
 
             float r = 1.0f / (uv1.x() * uv2.y() - uv1.y() * uv2.x());
 
+            //Calculando dois vetores perpendiculares à normal (tangente e bitangente)
             QVector3D tangent(
                 ((edge1.x() * uv2.y()) - (edge2.x() * uv1.y())) * r,
                 ((edge1.y() * uv2.y()) - (edge2.y() * uv1.y())) * r,
