@@ -10,7 +10,7 @@ struct Material //Propriedades do material
 uniform Material material;
 layout (location = 0) out vec3 gPosition;
 //layout (location = 1) out vec3 gNormal;
-//layout (location = 2) out vec3 gAmbiente;
+layout (location = 2) out vec3 gAmbiente;
 //layout (location = 3) out vec3 gDifusa;
 //layout (location = 4) out vec4 gSpecShi;
 //layout (location = 5) out vec4 gTexCoords;
@@ -20,6 +20,8 @@ in vec2 fragUV;
 in vec3 fragPos;
 in vec3 fragNormal;
 
+out vec3 finalColor;
+
 void main()
 {
     // store the fragment position vector in the first gbuffer texture
@@ -27,12 +29,10 @@ void main()
 
 //    gNormal = fragNormal;
 
-//    gAmbiente = material.ambient;
+    gAmbiente = material.ambient;
 
 //    gDifusa = material.diffuse;
 
 //    gSpecShi = vec4(material.specular,material.shininess);
-
-    //finalColor = vec3(1,0,1);
 
 }

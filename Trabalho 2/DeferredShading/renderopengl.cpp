@@ -233,6 +233,33 @@ void RenderOpengl::initializeGL()
     glEnable( GL_LINE_SMOOTH );
     glLineWidth(1.0f);
 
+    _programGB = new QOpenGLShaderProgram();
+
+    //Adicionando shaders ao programa
+
+    _programGB->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/GBvertexshader.glsl");
+    _programGB->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/GBfragmentshader.glsl");
+
+    //Linka shaders que foram adicionados ao programa
+    _programGB->link();
+
+    if (!_programGB->isLinked())
+    {
+        std::cout<<"Problemas ao linkar shaders de Gbuffer"<<std::endl;
+    }
+    //Liga o programa ao atual contexto
+
+    setFile("../golfball/golfball.obj");
+
+    _programGB->bind();
+
+    createVAO();
+
+    //createNormalMapTexture("../golfball/golfball.png");
+
+    createFrameBuffer();
+
+
     _programQuad = new QOpenGLShaderProgram();
     //Adicionando shaders ao programa
 
@@ -257,32 +284,8 @@ void RenderOpengl::initializeGL()
     glBufferData(GL_ARRAY_BUFFER, _pointsScreen.size()*sizeof(QVector3D), &_pointsScreen[0], GL_STATIC_DRAW);
     glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(5);
+    //createTexture("../golfball/golfball.png");
 
-    _programGB = new QOpenGLShaderProgram();
-
-    //Adicionando shaders ao programa
-
-    _programGB->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/GBvertexshader.glsl");
-    _programGB->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/GBfragmentshader.glsl");
-
-    //Linka shaders que foram adicionados ao programa
-    _programGB->link();
-
-    if (!_programGB->isLinked())
-    {
-        std::cout<<"Problemas ao linkar shaders de Gbuffer"<<std::endl;
-    }
-    //Liga o programa ao atual contexto
-
-    setFile("../golfball/golfball.obj");
-
-    _programGB->bind();
-
-    createVAO();
-
-    createNormalMapTexture("../golfball/golfball.png");
-
-    createFrameBuffer();
 
 }
 void RenderOpengl::printThings()
@@ -373,6 +376,7 @@ void RenderOpengl::paintGL()
     _programGB->bind();
     _vao.bind();
     glBindFramebuffer(GL_FRAMEBUFFER, _gBuffer);
+    glViewport(0,0,cam.width,cam.height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //Definindo matriz view e projection
@@ -380,7 +384,6 @@ void RenderOpengl::paintGL()
      _view.lookAt(cam.eye, cam.at, cam.up);
      _proj.setToIdentity();
      _proj.perspective((cam.fovy*3.14)/180, (float)cam.width/cam.height, cam.zNear, cam.zFar);
-     //_model.setToIdentity();
 
     //Definindo matrizes para passar para os shaders
 
@@ -388,7 +391,7 @@ void RenderOpengl::paintGL()
             _model[1][0],_model[1][1],_model[1][2],_model[1][3],
             _model[2][0],_model[2][1],_model[2][2],_model[2][3],
             _model[3][0],_model[3][1],_model[3][2],_model[3][3]);
-    //QMatrix4x4 m = _model;
+
     QMatrix4x4 v = _view;
     QMatrix4x4 p = _proj;
 
@@ -421,8 +424,11 @@ void RenderOpengl::paintGL()
     _programQuad->bind();
     _vao2.bind();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glClear(GL_COLOR_BUFFER_BIT);
     glViewport(0,0,cam.width,cam.height);
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    //model-view : Passa para espaço de projeção
+    _programQuad->setUniformValue("mvp", mvp);
 
     //Ativar e linkar a textura
     glActiveTexture(GL_TEXTURE0);
@@ -693,13 +699,13 @@ void RenderOpengl::createFrameBuffer()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _gPosition, 0);
 
-    // - Buffer de Normal
-    glGenTextures(1, &_gNormal);
-    glBindTexture(GL_TEXTURE_2D, _gNormal);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, cam.width, cam.height, 0, GL_RGB, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _gNormal, 0);
+//    // - Buffer de Normal
+//    glGenTextures(1, &_gNormal);
+//    glBindTexture(GL_TEXTURE_2D, _gNormal);
+//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, cam.width, cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _gNormal, 0);
 
     // - Buffer de Ambiente
     glGenTextures(1, &_gAmbiente);
@@ -709,49 +715,49 @@ void RenderOpengl::createFrameBuffer()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, _gAmbiente, 0);
 
-    // - Buffer de Difusa
-    glGenTextures(1, &_gDifusa);
-    glBindTexture(GL_TEXTURE_2D, _gDifusa);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, cam.width,  cam.height, 0, GL_RGB, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, _gDifusa, 0);
+//    // - Buffer de Difusa
+//    glGenTextures(1, &_gDifusa);
+//    glBindTexture(GL_TEXTURE_2D, _gDifusa);
+//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, cam.width,  cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, _gDifusa, 0);
 
 
-    // - Buffer de Especular e brilho
-    glGenTextures(1, &_gSpecShi);
-    glBindTexture(GL_TEXTURE_2D, _gSpecShi);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cam.width,  cam.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, _gSpecShi, 0);
+//    // - Buffer de Especular e brilho
+//    glGenTextures(1, &_gSpecShi);
+//    glBindTexture(GL_TEXTURE_2D, _gSpecShi);
+//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cam.width,  cam.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, _gSpecShi, 0);
 
-    // - Buffer de Coordenadas de Textura
-    glGenTextures(1, &_gTexCoords);
-    glBindTexture(GL_TEXTURE_2D, _gTexCoords);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, cam.width,  cam.height, 0, GL_RGB, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, _gTexCoords, 0);
+//    // - Buffer de Coordenadas de Textura
+//    glGenTextures(1, &_gTexCoords);
+//    glBindTexture(GL_TEXTURE_2D, _gTexCoords);
+//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, cam.width,  cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, _gTexCoords, 0);
 
 
-    GLenum attachments[1] = { GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(1,attachments);
+    GLenum attachments[2] = { GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT2};
+    glDrawBuffers(2,attachments);
 
     //Buffer de profundidade
     glGenTextures(1, &_gDepth);
     glBindTexture(GL_TEXTURE_2D, _gDepth);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, cam.width, cam.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
-                  NULL);
+                  0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _gDepth, 0);
 
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
     {
         printf("Erro no frame buffer\n");
     }
-
-    glBindFramebuffer(GL_FRAMEBUFFER, _gBuffer);
-
 }
 
 void RenderOpengl::createScreenQuad()
@@ -764,9 +770,4 @@ void RenderOpengl::createScreenQuad()
          QVector3D(1.0f, -1.0f, 0.0f),
          QVector3D(1.0f,  1.0f, 0.0f),
     };
-
-   for(int i = 0; i< _pointsScreen.size(); i++)
-   {
-       printf("Valor: %f %f %f \n", _pointsScreen[i].x(),_pointsScreen[i].y(),_pointsScreen[i].z());
-   }
 }

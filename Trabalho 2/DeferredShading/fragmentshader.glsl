@@ -11,7 +11,7 @@
 //uniform bool hasDT; //Variavel que diz se vai ter textura difusa ou não
 
 in vec2 UV;
-out vec3 finalColor; // Cor final do objeto
+out vec4 finalColor; // Cor final do objeto
 
 //uniform vec3 lightPos; // Posição da luz em coordenada do olho
 
@@ -23,6 +23,14 @@ out vec3 finalColor; // Cor final do objeto
 //uniform sampler2D gNormal;
 //uniform sampler2D gDifusa;
 uniform sampler2D gDepth;
+
+float linearizeDepth(vec2 uv)
+{
+    float zNear = 0.1;
+    float zFar  = 1000.0;
+    float depth = texture2D(gDepth, uv).x;
+    return (2.0 * zNear) / (zFar + zNear - depth * (zFar - zNear));
+}
 
 void main()
 {
@@ -75,8 +83,13 @@ void main()
 //        //Calcula componente especular
 //        specular = iSpec * Especular;
 //    }
-
-   // finalColor = texture(gDepth, UV).rgb;
-    finalColor = vec3(0,1,0.5);
+    float d;
+    if (UV.x < 0.5) // left part
+      d = linearizeDepth(UV);
+    else // right part
+      d = texture2D(gDepth, UV).x;
+    finalColor = vec4(d,d,d,1.0);
+    //finalColor = vec3(0,1,0.5);
+//    finalColor = vec4(texture(gDepth, UV).rgb,1);
 
 }

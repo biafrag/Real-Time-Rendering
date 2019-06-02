@@ -32,4 +32,6 @@
 
         //Só passando coordenadas de textura pro fragment
         fragUV = vertexTexCoord;
+
+
     }
