@@ -65,6 +65,7 @@ private:
    unsigned int _gSpecShi;
    unsigned int _gDepth;
    unsigned int _gTexCoords;
+   unsigned int _gTangente;
 
 
 

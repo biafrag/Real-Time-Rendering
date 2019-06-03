@@ -410,14 +410,43 @@ void RenderOpengl::paintGL()
 
     //model-view : Passa para espaço de projeção
     _programGB->setUniformValue("mvp", mvp);
-    //Ativar e linkar a textura
+
+    //Ativar e linkar a textura de Z Buffer
     glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _gDepth);
+    _programQuad->setUniformValue("gDepth", 0);
+
+    GLint gDepthLocation = glGetUniformLocation(_programQuad->programId(), "gDepth");
+
+    glUniform1i(gDepthLocation,  0);
+
+    //Ativar e linkar a textura de posição
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _gPosition);
     _programQuad->setUniformValue("gPosition", 0);
 
-    GLint gDepthLocation = glGetUniformLocation(_programQuad->programId(), "gPosition");
+    GLint gPositionLocation = glGetUniformLocation(_programQuad->programId(), "gPosition");
 
-    glUniform1i(gDepthLocation,  0);
+    glUniform1i(gPositionLocation,  1);
+
+    //Ativar e linkar a textura de normal
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, _gNormal);
+    _programQuad->setUniformValue("gNormal", 0);
+
+    GLint gNormalLocation = glGetUniformLocation(_programQuad->programId(), "gNormal");
+
+    glUniform1i(gNormalLocation,  2);
+
+    //Ativar e linkar a textura de tangente
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, _gTangente);
+    _programQuad->setUniformValue("gTangente", 0);
+
+    GLint gTangenteLocation = glGetUniformLocation(_programQuad->programId(), "gTangente");
+
+    glUniform1i(gTangenteLocation,  2);
+
 
     //Desenhando os triângulos que formam o cubo
     glDrawArrays(GL_TRIANGLES, 0, (int)_pointsScreen.size());
@@ -694,19 +723,19 @@ void RenderOpengl::createFrameBuffer()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _gPosition, 0);
 
-    glGenTextures(1, &_gAmbiente);
-    glBindTexture(GL_TEXTURE_2D, _gAmbiente);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+    glGenTextures(1, &_gNormal);
+    glBindTexture(GL_TEXTURE_2D, _gNormal);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _gAmbiente, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _gNormal, 0);
 
-    glGenTextures(1, &_gDifusa);
-    glBindTexture(GL_TEXTURE_2D, _gDifusa);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glGenTextures(1, &_gTangente);
+    glBindTexture(GL_TEXTURE_2D, _gTangente);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, _gDifusa, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, _gTangente, 0);
 
 
 

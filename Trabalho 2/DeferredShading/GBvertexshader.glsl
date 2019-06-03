@@ -17,16 +17,19 @@
     //Variáveis out
     out vec3 fragNormal;
     out vec3 fragPos;
+    out vec3 fragTang;
 
     void main()
     {
         //Posição do vértice no espaço de projeção
         gl_Position = mvp * vec4( vertexPos, 1 );
 
-//        //Posição do vértice no espaço de olho
-        fragPos =  vertexPos;/*mv * vec4( vertexPos, 1 ) ).xyz*/;
+        //Posição do vértice no espaço de olho
+        fragPos =  (mv * vec4( vertexPos, 1 ) ).xyz;
 
-//        //Posição da normal no espaço do olho
-        //fragNormal = ( normalMatrix * vec4( vertexNormal, 0 ) ).xyz;
+        //Posição da normal no espaço do olho
+        fragNormal = ( normalMatrix * vec4( vertexNormal, 0 ) ).xyz;
+
+        fragTang = tangent;
 
     }

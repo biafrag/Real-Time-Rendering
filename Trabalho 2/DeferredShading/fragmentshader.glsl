@@ -5,10 +5,10 @@
 in vec2 UV;
 out vec3 finalColor; // Cor final do objeto
 
-uniform sampler2D gAmbiente;
 uniform sampler2D gDepth;
-uniform sampler2D gDifusa;
 uniform sampler2D gPosition;
+uniform sampler2D gNormal;
+uniform sampler2D gTangente;
 
 float linearizeDepth(vec2 uv)
 {
@@ -23,6 +23,9 @@ void main()
 //    float d;
 //    d = linearizeDepth(UV);
 //    finalColor = vec3(d,d,d);
-    finalColor = texture(gAmbiente,UV).rgb;
+    vec3 fragPos = texture(gPosition,UV).rgb;
+    vec3 fragNormal = texture(gNormal,UV).rgb;
+    vec3 fragTang = texture(gTangente,UV).rgb;
+    finalColor = texture(gTangente,UV).rgb;
 
 }
