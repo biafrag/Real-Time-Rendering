@@ -52,6 +52,7 @@ void RenderOpengl::setFile(std::string fileName)
         readFile(fileName,_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
         quadToTriangleMesh(indexPointsQuad, indexPointsTriangle,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
         organizingData();
+        //createSphere();
         computeTangents();
 }
 
@@ -249,9 +250,6 @@ void RenderOpengl::initializeGL()
 
     createVAO();
 
-    //createNormalMapTexture("../golfball/golfball.png");
-
-
     _programQuad = new QOpenGLShaderProgram();
     //Adicionando shaders ao programa
 
@@ -268,7 +266,7 @@ void RenderOpengl::initializeGL()
     _programQuad->bind();
 
     createVAO2();
-   // createTexture("../golfball/golfball.png");
+    createNormalMapTexture("../golfball/golfball.png");
 
 }
 void RenderOpengl::printThings()
@@ -354,8 +352,6 @@ void RenderOpengl::createNormalMapTexture(const std::string& imagePath)
 
 void RenderOpengl::paintGL()
 {
-
-    glDisable(GL_CULL_FACE);
     //PRIMEIRA PASSADA
     _programGB->bind();
     _vao.bind();
@@ -389,7 +385,17 @@ void RenderOpengl::paintGL()
     _programGB->setUniformValue("mvp", mvp);
 //    //inversa transposta da model-view
     _programGB->setUniformValue("normalMatrix", mv.inverted().transposed());
+    //Variáveis de material e luz
+    _programGB->setUniformValue("lightPos", v * cam.eye/*v*QVector3D(5,5,-5)*/);
 
+    //Ativar e linkar a textura de normal map
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _normalMap);
+    _programQuad->setUniformValue("normalSampler", 0);
+
+    GLint blah = glGetUniformLocation(_programQuad->programId(), "normalSampler");
+
+    glUniform1i(blah,0);
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexPoints.size()), GL_UNSIGNED_INT, nullptr);
 
 
@@ -408,8 +414,6 @@ void RenderOpengl::paintGL()
     //Ativar e linkar a textura de Z Buffer
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _gDepth);
-    _programQuad->setUniformValue("gDepth", 0);
-
     GLint gDepthLocation = glGetUniformLocation(_programQuad->programId(), "gDepth");
 
     glUniform1i(gDepthLocation,  0);
@@ -417,29 +421,49 @@ void RenderOpengl::paintGL()
     //Ativar e linkar a textura de posição
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, _gPosition);
-    _programQuad->setUniformValue("gPosition", 0);
-
     GLint gPositionLocation = glGetUniformLocation(_programQuad->programId(), "gPosition");
-
     glUniform1i(gPositionLocation,  1);
 
     //Ativar e linkar a textura de normal
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, _gNormal);
-    _programQuad->setUniformValue("gNormal", 0);
-
     GLint gNormalLocation = glGetUniformLocation(_programQuad->programId(), "gNormal");
-
     glUniform1i(gNormalLocation,  2);
+
+    //Texturas adicionais para bump
 
     //Ativar e linkar a textura de tangente
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, _gTangente);
-    _programQuad->setUniformValue("gTangente", 0);
-
     GLint gTangenteLocation = glGetUniformLocation(_programQuad->programId(), "gTangente");
-
     glUniform1i(gTangenteLocation,  3);
+
+    //Ativar e linkar a textura de textura mapeada
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, _gTex);
+    GLint gTexLocation = glGetUniformLocation(_programQuad->programId(), "gTex");
+    glUniform1i(gTexLocation,  4);
+
+    //Ativar e linkar a textura de normal map
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, _normalMap);
+    GLint normalMapLocation = glGetUniformLocation(_programQuad->programId(), "normalSampler");
+
+    glUniform1i(normalMapLocation, 5);
+
+    //Ativar e linkar a textura de luz
+    glActiveTexture(GL_TEXTURE6);
+    glBindTexture(GL_TEXTURE_2D, _gLight);
+    GLint gLightLocation = glGetUniformLocation(_programQuad->programId(), "gLight");
+
+    glUniform1i(gLightLocation, 6);
+
+    //Ativar e linkar a textura de observador
+    glActiveTexture(GL_TEXTURE7);
+    glBindTexture(GL_TEXTURE_2D, _gTanViewer);
+    GLint gViewerLocation = glGetUniformLocation(_programQuad->programId(), "gTanViewer");
+
+    glUniform1i(gViewerLocation, 7);
 
     //Bola
     _programQuad->setUniformValue("material.ambient", QVector3D(0.2f,0.2f,0.2f));
@@ -448,7 +472,7 @@ void RenderOpengl::paintGL()
     _programQuad->setUniformValue("material.shininess", 100.0f);
 
     //Variáveis de material e luz
-    _programQuad->setUniformValue("lightPos", v * cam.eye/*v*QVector3D(5,5,-5)*/);
+   _programQuad->setUniformValue("lightPos", v * cam.eye/*v*QVector3D(0,300,300)*/);
 
     //Desenhando os triângulos que formam o cubo
     glDrawArrays(GL_TRIANGLES, 0, (int)_pointsScreen.size());
@@ -527,6 +551,9 @@ void RenderOpengl::resizeGL(int w, int h)
     cam.height = h;
     glm::vec3 zero(0);
     radius=((glm::min(h,w)/2.0)-1);
+
+    //Bom fazer isso?
+    updateFrameBuffer();
 }
 
 QVector3D RenderOpengl::Points_Sphere(QVector3D pointT)
@@ -709,6 +736,7 @@ void RenderOpengl::computeTangents()
             t.normalize();
             _tangents[i] = QVector3D(t.x(), t.y(), t.z());
         }
+
 }
 
 void RenderOpengl::createFrameBuffer()
@@ -732,6 +760,10 @@ void RenderOpengl::createFrameBuffer()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _gNormal, 0);
 
+
+    //Texturas adicionais para bump
+
+    //Buffer de Tangente
     glGenTextures(1, &_gTangente);
     glBindTexture(GL_TEXTURE_2D, _gTangente);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
@@ -739,10 +771,37 @@ void RenderOpengl::createFrameBuffer()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, _gTangente, 0);
 
+    //Buffer de coordenadas de textura do bump
+    glGenTextures(1, &_gTex);
+    glBindTexture(GL_TEXTURE_2D, _gTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, _gTex, 0);
 
+    //Buffer de luz no espaço tangente
+    glGenTextures(1, &_gLight);
+    glBindTexture(GL_TEXTURE_2D, _gLight);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, _gLight, 0);
 
-    unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
-    glDrawBuffers(3,attachments);
+    //Buffer de observador no espaço tangente
+    glGenTextures(1, &_gTanViewer);
+    glBindTexture(GL_TEXTURE_2D, _gTanViewer);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, _gTanViewer, 0);
+
+    unsigned int attachments[6] = { GL_COLOR_ATTACHMENT0,
+                                    GL_COLOR_ATTACHMENT1,
+                                    GL_COLOR_ATTACHMENT2,
+                                    GL_COLOR_ATTACHMENT3,
+                                    GL_COLOR_ATTACHMENT4,
+                                    GL_COLOR_ATTACHMENT5};
+    glDrawBuffers(6,attachments);
 
     //Buffer de profundidade
     glGenTextures(1, &_gDepth);
@@ -758,6 +817,44 @@ void RenderOpengl::createFrameBuffer()
     {
         printf("Erro no frame buffer\n");
     }
+}
+
+void RenderOpengl::updateFrameBuffer()
+{
+   glBindFramebuffer(GL_FRAMEBUFFER, _gBuffer);
+
+   // - Buffer de Posição
+   glBindTexture(GL_TEXTURE_2D, _gPosition);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+
+   glBindTexture(GL_TEXTURE_2D, _gNormal);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+
+
+   //Texturas adicionais para bump
+
+   //Buffer de Tangente
+   glBindTexture(GL_TEXTURE_2D, _gTangente);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+
+   //Buffer de coordenadas de textura do bump
+   glBindTexture(GL_TEXTURE_2D, _gTex);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+
+   //Buffer de luz no espaço tangente
+   glBindTexture(GL_TEXTURE_2D, _gLight);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+
+
+   //Buffer de observador no espaço tangente
+   glBindTexture(GL_TEXTURE_2D, _gTanViewer);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+
+   //Buffer de profundidade
+    glBindTexture(GL_TEXTURE_2D, _gDepth);
+   glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, cam.width, cam.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
+                 0);
+
 }
 
 void RenderOpengl::createScreenQuad()

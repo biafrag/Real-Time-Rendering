@@ -46,10 +46,10 @@ void RenderOpengl::setFile(std::string fileName)
         _indexPoints.clear();
         _indexNormals.clear();
         _indexTex.clear();
-//        readFile(fileName,_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
-//        quadToTriangleMesh(indexPointsQuad, indexPointsTriangle,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
-//        organizingData();
-        createSphere();
+        readFile(fileName,_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
+        quadToTriangleMesh(indexPointsQuad, indexPointsTriangle,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
+        organizingData();
+        //createSphere();
         computeTangents();
 }
 
@@ -217,6 +217,8 @@ void RenderOpengl::organizingData()
 
 void RenderOpengl::initializeGL()
 {
+    cam.width = width();
+    cam.height = height();
     initializeOpenGLFunctions();
 
     makeCurrent();
@@ -397,7 +399,7 @@ void RenderOpengl::paintGL()
     //inversa transposta da model-view
     _program->setUniformValue("normalMatrix", mv.inverted().transposed());
     //Variáveis de material e luz
-    _program->setUniformValue("lightPos", v * cam.eye/*v*QVector3D(5,5,-5)*/);
+    _program->setUniformValue("lightPos", /*v * cam.eye*/v*QVector3D(5,5,-5));
 
     _program->setUniformValue("hasDT", false);
 

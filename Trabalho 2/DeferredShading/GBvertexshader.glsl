@@ -13,11 +13,15 @@
     uniform mat4 mvp; //Matriz model view projection
     uniform mat4 mv; // Matriz model view
     uniform mat4 normalMatrix; //Inversa transposta da MV
+    uniform vec3 lightPos; // Posição da luz em coordenada do olho
 
     //Variáveis out
     out vec3 fragNormal;
     out vec3 fragPos;
     out vec3 fragTang;
+    out vec2 fragUV;
+    out vec3 lightTang;
+    out vec3 tanViewer;
 
     void main()
     {
@@ -30,6 +34,12 @@
         //Posição da normal no espaço do olho
         fragNormal = ( normalMatrix * vec4( vertexNormal, 0 ) ).xyz;
 
-        fragTang = tangent;
+        //Parte do bump
+        //Posição da tangente no espaço do olho
+        fragTang = ( normalMatrix * vec4( tangent, 0 ) ).xyz;
+        //fragTang = tangent;
+
+        fragUV = vertexTexCoord;
+
 
     }

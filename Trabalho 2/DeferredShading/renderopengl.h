@@ -57,15 +57,16 @@ private:
    unsigned int _pointsScreenBuffer = static_cast<unsigned int>(-1);
 
    //Parte de GBuffer
-   unsigned int _gBuffer;
+   unsigned int _gBuffer; //Só para fins de curiosidade
    unsigned int _gPosition;
    unsigned int _gNormal;
-   unsigned int _gAmbiente;
-   unsigned int _gDifusa;
-   unsigned int _gSpecShi;
    unsigned int _gDepth;
-   unsigned int _gTexCoords;
+
+   //Buffers adicionais para bump
    unsigned int _gTangente;
+   unsigned int _gTex; // Textura já mapeada
+   unsigned int _gLight; //Luz no espaço tangente
+   unsigned int _gTanViewer; // observador no espaço tangente
 
 
 
@@ -99,6 +100,7 @@ private:
     void computeTangents(); //Calcula tangentes e binormais para cada ponto
     void createFrameBuffer();
     void createScreenQuad();
+    void updateFrameBuffer();
 
     //Arcball
     bool mousepress;
