@@ -390,12 +390,6 @@ void RenderOpengl::paintGL()
 //    //inversa transposta da model-view
     _programGB->setUniformValue("normalMatrix", mv.inverted().transposed());
 
-    //Bola
-    _programGB->setUniformValue("material.ambient", QVector3D(0.2f,0.2f,0.2f));
-    _programGB->setUniformValue("material.diffuse", QVector3D(0.8f,0.8f,0.8f));
-    _programGB->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
-    _programGB->setUniformValue("material.shininess", 100.0f);
-
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexPoints.size()), GL_UNSIGNED_INT, nullptr);
 
 
@@ -439,14 +433,22 @@ void RenderOpengl::paintGL()
     glUniform1i(gNormalLocation,  2);
 
     //Ativar e linkar a textura de tangente
-    glActiveTexture(GL_TEXTURE2);
+    glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, _gTangente);
     _programQuad->setUniformValue("gTangente", 0);
 
     GLint gTangenteLocation = glGetUniformLocation(_programQuad->programId(), "gTangente");
 
-    glUniform1i(gTangenteLocation,  2);
+    glUniform1i(gTangenteLocation,  3);
 
+    //Bola
+    _programQuad->setUniformValue("material.ambient", QVector3D(0.2f,0.2f,0.2f));
+    _programQuad->setUniformValue("material.diffuse", QVector3D(0.8f,0.8f,0.8f));
+    _programQuad->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
+    _programQuad->setUniformValue("material.shininess", 100.0f);
+
+    //Variáveis de material e luz
+    _programQuad->setUniformValue("lightPos", v * cam.eye/*v*QVector3D(5,5,-5)*/);
 
     //Desenhando os triângulos que formam o cubo
     glDrawArrays(GL_TRIANGLES, 0, (int)_pointsScreen.size());
