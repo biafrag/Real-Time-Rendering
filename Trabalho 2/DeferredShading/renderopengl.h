@@ -12,7 +12,7 @@
 //#include <QOpenGLFramebufferObject>
 //#include <QOpenGLFramebufferObjectFormat>
 #include<QOpenGLExtraFunctions>
-
+#include <QOpenGLFramebufferObject>
 
 
 #include <glm/glm.hpp>
@@ -67,6 +67,7 @@ private:
    unsigned int _gTexCoords;
 
 
+
    struct Camera {
       QVector3D eye;      /* posicao do olho ou centro de projecao conica */
       QVector3D at;       /* ponto para onde a camera aponta              */
@@ -88,6 +89,7 @@ private:
 
 private:
     void createVAO(); //Cria VAO
+    void createVAO2(); //Cria VAO2
     void createTexture(const std::string &imagePath); //Seta textura difusa
     void createNormalMapTexture(const std::string& imagePath); //Seta Textura de normal
     void quadToTriangleMesh(std::vector<int> &indexPointsQuad, std::vector<int> &indexPointsTriangle, std::vector<int> &indexNormalsTriangles, std::vector<int> &indexTexTriangles, std::vector<int> &indexNormalsQuad, std::vector<int> &indexTexQuad); //Transforma malha de quads em malha de triângulos

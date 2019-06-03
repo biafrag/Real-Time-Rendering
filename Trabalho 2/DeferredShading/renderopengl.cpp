@@ -12,14 +12,14 @@
 RenderOpengl::RenderOpengl(QWidget* parent)
     :QOpenGLWidget(parent)
 {
-    cam.at = QVector3D(0.f,0.f,0.f);
-    cam.eye =  QVector3D(0.f,0.f,300.f);
+    cam.at = QVector3D(0.0f,0.f,0.f);
+    cam.eye =  QVector3D(0.0f,0.f,300.f);
     cam.up = QVector3D(0.f,2.f,0.f);
     cam.zNear = 0.1f;
     cam.zFar  = 1000.f;
     cam.fovy  = 60.f;
-    cam.width = width();
-    cam.height = height();
+    cam.width = 1002;
+    cam.height = 701;
     this->setFocus();
 
     createScreenQuad();
@@ -222,17 +222,11 @@ void RenderOpengl::initializeGL()
     initializeOpenGLFunctions();
 
     makeCurrent();
-
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glClearColor(0,0,0,1);
-    glViewport(0,0,width(),height());
 
-    //Layout de ponto e linha:
-    glEnable(GL_POINT_SMOOTH);
-    glEnable( GL_LINE_SMOOTH );
-    glLineWidth(1.0f);
-
+    createFrameBuffer();
     _programGB = new QOpenGLShaderProgram();
 
     //Adicionando shaders ao programa
@@ -257,8 +251,6 @@ void RenderOpengl::initializeGL()
 
     //createNormalMapTexture("../golfball/golfball.png");
 
-    createFrameBuffer();
-
 
     _programQuad = new QOpenGLShaderProgram();
     //Adicionando shaders ao programa
@@ -275,17 +267,8 @@ void RenderOpengl::initializeGL()
     }
     _programQuad->bind();
 
-    //Criando e configurando vao
-    _vao2.create();
-    _vao2.bind();
-    //Criando buffer de pontos dos vértices
-    glGenBuffers(1, &_pointsScreenBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, _pointsScreenBuffer);
-    glBufferData(GL_ARRAY_BUFFER, _pointsScreen.size()*sizeof(QVector3D), &_pointsScreen[0], GL_STATIC_DRAW);
-    glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glEnableVertexAttribArray(5);
-    //createTexture("../golfball/golfball.png");
-
+    createVAO2();
+   // createTexture("../golfball/golfball.png");
 
 }
 void RenderOpengl::printThings()
@@ -372,6 +355,7 @@ void RenderOpengl::createNormalMapTexture(const std::string& imagePath)
 void RenderOpengl::paintGL()
 {
 
+    glDisable(GL_CULL_FACE);
     //PRIMEIRA PASSADA
     _programGB->bind();
     _vao.bind();
@@ -405,10 +389,6 @@ void RenderOpengl::paintGL()
     _programGB->setUniformValue("mvp", mvp);
 //    //inversa transposta da model-view
     _programGB->setUniformValue("normalMatrix", mv.inverted().transposed());
-//    //Variáveis de material e luz
-    _programGB->setUniformValue("lightPos", v * cam.eye/*v*QVector3D(5,5,-5)*/);
-
-    //_programQuad->setUniformValue("hasDT", false);
 
     //Bola
     _programGB->setUniformValue("material.ambient", QVector3D(0.2f,0.2f,0.2f));
@@ -424,21 +404,20 @@ void RenderOpengl::paintGL()
     _programQuad->bind();
     _vao2.bind();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+   // glDrawBuffer(GL_BACK);
     glViewport(0,0,cam.width,cam.height);
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT  | GL_DEPTH_BUFFER_BIT);
 
     //model-view : Passa para espaço de projeção
-    _programQuad->setUniformValue("mvp", mvp);
-
+    _programGB->setUniformValue("mvp", mvp);
     //Ativar e linkar a textura
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, _gDepth);
-    _programQuad->setUniformValue("gDepth", 0);
+    glBindTexture(GL_TEXTURE_2D, _gPosition);
+    _programQuad->setUniformValue("gPosition", 0);
 
-    GLint gDepthLocation = glGetUniformLocation(_programQuad->programId(), "gDepth");
+    GLint gDepthLocation = glGetUniformLocation(_programQuad->programId(), "gPosition");
 
     glUniform1i(gDepthLocation,  0);
-
 
     //Desenhando os triângulos que formam o cubo
     glDrawArrays(GL_TRIANGLES, 0, (int)_pointsScreen.size());
@@ -488,6 +467,22 @@ void RenderOpengl::createVAO()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, _indexPoints.size()*sizeof(int), _indexPoints.data(), GL_STATIC_DRAW);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _meshBuffer);
 
+
+}
+
+
+void RenderOpengl::createVAO2()
+{
+    //Criando e configurando vao
+    _vao2.create();
+    _vao2.bind();
+
+    //Criando buffer de pontos dos vértices
+    glGenBuffers(1, &_pointsScreenBuffer);
+    glBindBuffer(GL_ARRAY_BUFFER, _pointsScreenBuffer);
+    glBufferData(GL_ARRAY_BUFFER, _pointsScreen.size()*sizeof(QVector3D), &_pointsScreen[0], GL_STATIC_DRAW);
+    glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glEnableVertexAttribArray(5);
 
 }
 
@@ -699,58 +694,32 @@ void RenderOpengl::createFrameBuffer()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _gPosition, 0);
 
-//    // - Buffer de Normal
-//    glGenTextures(1, &_gNormal);
-//    glBindTexture(GL_TEXTURE_2D, _gNormal);
-//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, cam.width, cam.height, 0, GL_RGB, GL_FLOAT, NULL);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _gNormal, 0);
-
-    // - Buffer de Ambiente
     glGenTextures(1, &_gAmbiente);
     glBindTexture(GL_TEXTURE_2D, _gAmbiente);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, cam.width,  cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, _gAmbiente, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _gAmbiente, 0);
 
-//    // - Buffer de Difusa
-//    glGenTextures(1, &_gDifusa);
-//    glBindTexture(GL_TEXTURE_2D, _gDifusa);
-//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, cam.width,  cam.height, 0, GL_RGB, GL_FLOAT, NULL);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, _gDifusa, 0);
-
-
-//    // - Buffer de Especular e brilho
-//    glGenTextures(1, &_gSpecShi);
-//    glBindTexture(GL_TEXTURE_2D, _gSpecShi);
-//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, cam.width,  cam.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, _gSpecShi, 0);
-
-//    // - Buffer de Coordenadas de Textura
-//    glGenTextures(1, &_gTexCoords);
-//    glBindTexture(GL_TEXTURE_2D, _gTexCoords);
-//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, cam.width,  cam.height, 0, GL_RGB, GL_FLOAT, NULL);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, _gTexCoords, 0);
+    glGenTextures(1, &_gDifusa);
+    glBindTexture(GL_TEXTURE_2D, _gDifusa);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, _gDifusa, 0);
 
 
-    GLenum attachments[2] = { GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT2};
-    glDrawBuffers(2,attachments);
+
+    unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0,GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2};
+    glDrawBuffers(3,attachments);
 
     //Buffer de profundidade
     glGenTextures(1, &_gDepth);
     glBindTexture(GL_TEXTURE_2D, _gDepth);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, cam.width, cam.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, cam.width, cam.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
                   0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, _gDepth, 0);
 

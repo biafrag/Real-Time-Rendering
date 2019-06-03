@@ -1,8 +1,8 @@
 #version 410 core
 
 layout (location = 5) in vec3 vPos;
-uniform mat4 mvp; //Matriz model view projection
 out vec2 UV;
+uniform mat4 mvp; //Matriz model view projection
 void main()
 {
 

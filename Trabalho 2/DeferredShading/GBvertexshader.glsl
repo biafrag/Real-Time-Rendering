@@ -15,7 +15,6 @@
     uniform mat4 normalMatrix; //Inversa transposta da MV
 
     //Variáveis out
-    out vec2 fragUV; // Coordenada de textura passada pro fragment
     out vec3 fragNormal;
     out vec3 fragPos;
 
@@ -24,14 +23,10 @@
         //Posição do vértice no espaço de projeção
         gl_Position = mvp * vec4( vertexPos, 1 );
 
-        //Posição do vértice no espaço de olho
-        fragPos = ( mv * vec4( vertexPos, 1 ) ).xyz;
+//        //Posição do vértice no espaço de olho
+        fragPos =  vertexPos;/*mv * vec4( vertexPos, 1 ) ).xyz*/;
 
-        //Posição da normal no espaço do olho
-        vec3 fragNormal = ( normalMatrix * vec4( vertexNormal, 0 ) ).xyz;
-
-        //Só passando coordenadas de textura pro fragment
-        fragUV = vertexTexCoord;
-
+//        //Posição da normal no espaço do olho
+        //fragNormal = ( normalMatrix * vec4( vertexNormal, 0 ) ).xyz;
 
     }

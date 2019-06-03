@@ -38,3 +38,11 @@ FORMS += \
 
 RESOURCES += \
     shader.qrc
+
+win32{
+LIBS += -lOpenGL32
+}
+
+linux{
+LIBS += -lGL
+}
