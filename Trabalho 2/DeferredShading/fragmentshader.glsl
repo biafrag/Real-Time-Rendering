@@ -121,20 +121,31 @@ void main()
         vec3 N = fragNormal /*normalize(expand(texture(normalsampler,fragUV).rgb))*/;
         //Viewer
         vec3 V = -fragPos/*tanViewer*/;
+        float constant = 1.0;
+        float linear = 2;
+        float quadratic = 0.032;;
 
         finalColor = vec3(0,0,0);
-        for(int i = 5; i < 6  ; i++)
+
+        //Adicionando ambiente para que a esfera continue branca
+        finalColor += ambient;
+
+
+        for(int i = 0; i < 3; i++)
         {
             //Normalizando novamente a luz no espaço tangente
             vec3 L = normalize(lights[i].Position - fragPos);
+
+            float distance = length(L);
+            float attenuation = 1.0/(constant + linear*distance + quadratic*(distance*distance));
 
             //Calcula produto interno entre luz e normal no espaco tangente
             float iDif = dot(L,N);
 
             //Calcula componente difusa da luz
-            vec3 diffuse = max(0,iDif) * material.diffuse * lights[i].Color;
+            vec3 diffuse = max(0,iDif) * material.diffuse /** lights[i].Color*/;
 
-            finalColor += ambient + diffuse;
+            finalColor += (ambient*attenuation * lights[i].Color + diffuse*attenuation );
 
             //Se certifica que a luz e a normal nao sao perpendiculares
             if( iDif > 0 )
@@ -145,10 +156,10 @@ void main()
                 float iSpec = pow(max(dot(N,H),0.0),material.shininess);
 
                 //Calcula componente especular
-                specular = iSpec * material.specular* lights[i].Color;
+                specular = iSpec * material.specular * lights[i].Color;
             }
 
-            finalColor += specular;
+            finalColor += specular*attenuation;
         }
     }
     else if (mode == 2)

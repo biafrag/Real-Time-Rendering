@@ -970,16 +970,20 @@ void RenderOpengl::updateFrameBuffer()
 void RenderOpengl::setUniformArrays()
 {
     //Colocando luzes
-    QVector3D pos(0,0,300);
+    QVector3D pos(0,200,0);
+    pos = _view*pos;
     _programQuad->setUniformValue("lights[0].Position", pos);
-    _programQuad->setUniformValue("lights[0].Color", QVector3D(1,1,1));
-    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[0].Color", QVector3D(0,0,1));
+    pos =  QVector3D(0,300,600);
+    pos = _view*pos;
     _programQuad->setUniformValue("lights[1].Position",pos );
     _programQuad->setUniformValue("lights[1].Color", _colors[0]);
-    pos +=  QVector3D(100,200,0);
+    pos =  QVector3D(300,300,600);
+    pos = _view*pos;
     _programQuad->setUniformValue("lights[2].Position", pos );
     _programQuad->setUniformValue("lights[2].Color", _colors[1]);
-    pos +=  QVector3D(100,200,0);
+    pos =  QVector3D(0,0,300);
+    pos = _view*pos;
     _programQuad->setUniformValue("lights[3].Position", pos );
     _programQuad->setUniformValue("lights[3].Color", _colors[2]);
     pos +=  QVector3D(100,200,0);
@@ -1050,7 +1054,7 @@ void RenderOpengl::createScreenQuad()
    _colors = {
        QVector3D(0.5f, 0.0f, 0.0f),
        QVector3D(0.0f, 0.5f, 0.0f),
-       QVector3D(0.0f,  0.0f, 0.5f),
+       QVector3D(0.5f,  0.0f, 0.5f),
        QVector3D(1.0f,  0.0f, 0.0f),
        QVector3D(0.0f, 1.0f, 0.0f),
        QVector3D(0.0f,  0.0f, 1.0f),
