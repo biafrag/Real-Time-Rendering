@@ -483,16 +483,8 @@ void RenderOpengl::paintGL()
     _programQuad->setUniformValue("material.shininess", 100.0f);
 
     //Colocando luzes
-//    _programQuad->setUniformValue("lights[0].Position", v * cam.eye);
-//    _programQuad->setUniformValue("lights[0].Color", QVector3D(1,1,1));
 
-//    QVector3D pos(0,0,0);
-//    for(int i = 1; i < 20; i++)
-//    {
-//        pos +=  QVector3D(300,300,0);
-//        _programQuad->setUniformValue("lights[1].Position",v*cam.eye + v*QVector3D(700,700,0) );
-//        _programQuad->setUniformValue("lights[1].Color", _colors[0]);
-//    }
+    setUniformArrays();
     //Variáveis de material e luz
    _programQuad->setUniformValue("lightPos", v * cam.eye/*QVector3D(0,0,300)*/);
 
@@ -576,7 +568,6 @@ void RenderOpengl::resizeGL(int w, int h)
     glm::vec3 zero(0);
     radius=((glm::min(h,w)/2.0)-1);
 
-    //Bom fazer isso?
     updateFrameBuffer();
 }
 
@@ -976,6 +967,74 @@ void RenderOpengl::updateFrameBuffer()
 
 }
 
+void RenderOpengl::setUniformArrays()
+{
+    //Colocando luzes
+    QVector3D pos(0,0,300);
+    _programQuad->setUniformValue("lights[0].Position", pos);
+    _programQuad->setUniformValue("lights[0].Color", QVector3D(1,1,1));
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[1].Position",pos );
+    _programQuad->setUniformValue("lights[1].Color", _colors[0]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[2].Position", pos );
+    _programQuad->setUniformValue("lights[2].Color", _colors[1]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[3].Position", pos );
+    _programQuad->setUniformValue("lights[3].Color", _colors[2]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[4].Position", pos );
+    _programQuad->setUniformValue("lights[4].Color", _colors[3]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[5].Position", pos );
+    _programQuad->setUniformValue("lights[5].Color", _colors[4]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[6].Position", pos );
+    _programQuad->setUniformValue("lights[6].Color", _colors[5]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[7].Position", pos );
+    _programQuad->setUniformValue("lights[7].Color", _colors[6]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[8].Position", pos );
+    _programQuad->setUniformValue("lights[8].Color", _colors[7]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[9].Position", pos );
+    _programQuad->setUniformValue("lights[9].Color", _colors[8]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[10].Position", pos );
+    _programQuad->setUniformValue("lights[10].Color", _colors[9]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[11].Position", pos );
+    _programQuad->setUniformValue("lights[11].Color", _colors[10]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[12].Position", pos );
+    _programQuad->setUniformValue("lights[12].Color", _colors[11]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[13].Position", pos );
+    _programQuad->setUniformValue("lights[13].Color", _colors[12]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[14].Position", pos );
+    _programQuad->setUniformValue("lights[14].Color", _colors[13]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[15].Position", pos );
+    _programQuad->setUniformValue("lights[15].Color", _colors[14]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[16].Position", pos );
+    _programQuad->setUniformValue("lights[16].Color", _colors[15]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[17].Position", pos );
+    _programQuad->setUniformValue("lights[17].Color", _colors[16]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[18].Position", pos );
+    _programQuad->setUniformValue("lights[18].Color", _colors[17]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[19].Position", pos );
+    _programQuad->setUniformValue("lights[19].Color", _colors[18]);
+    pos +=  QVector3D(100,200,0);
+    _programQuad->setUniformValue("lights[20].Position", pos );
+    _programQuad->setUniformValue("lights[20].Color", _colors[19]);
+}
+
 void RenderOpengl::createScreenQuad()
 {
    _pointsScreen = {
@@ -989,25 +1048,25 @@ void RenderOpengl::createScreenQuad()
 
    //Create buffer of color of the lights
    _colors = {
-         QVector3D(0.5f, 0.0f, 0.0f),
-         QVector3D(0.0f, 0.5f, 0.0f),
-         QVector3D(0.0f,  0.0f, 0.5f),
-         QVector3D(1.0f,  0.0f, 0.0f),
-         QVector3D(0.0f, 1.0f, 0.0f),
-         QVector3D(0.0f,  0.0f, 1.0f),
-         QVector3D(0.5f, 0.5f, 0.0f),
-         QVector3D(0.0f, 0.5f, 0.5f),
-         QVector3D(0.5f,  0.0f, 0.5f),
-         QVector3D(1.0f,  1.0f, 0.0f),
-         QVector3D(0.0f, 1.0f, 1.0f),
-         QVector3D(1.0f,  0.0f, 1.0f),
-         QVector3D(0.5f, 1.0f, 0.0f),
-         QVector3D(0.5f,  0.0f, 1.0f),
-         QVector3D(1.0f, 0.5f, 0.0f),
-         QVector3D(1.0f, 1.0f, 0.5f),
-         QVector3D(0.5f,  1.0f, 0.5f),
-         QVector3D(0.0f,  0.75f, 0.0f),
-         QVector3D(0.25f, 0.25f, 0.0f),
-         QVector3D(0.0f,  1.0f, 0.75f),
-    };
+       QVector3D(0.5f, 0.0f, 0.0f),
+       QVector3D(0.0f, 0.5f, 0.0f),
+       QVector3D(0.0f,  0.0f, 0.5f),
+       QVector3D(1.0f,  0.0f, 0.0f),
+       QVector3D(0.0f, 1.0f, 0.0f),
+       QVector3D(0.0f,  0.0f, 1.0f),
+       QVector3D(0.5f, 0.5f, 0.0f),
+       QVector3D(0.0f, 0.5f, 0.5f),
+       QVector3D(0.5f,  0.0f, 0.5f),
+       QVector3D(1.0f,  1.0f, 0.0f),
+       QVector3D(0.0f, 1.0f, 1.0f),
+       QVector3D(1.0f,  0.0f, 1.0f),
+       QVector3D(0.5f, 1.0f, 0.0f),
+       QVector3D(0.5f,  0.0f, 1.0f),
+       QVector3D(1.0f, 0.5f, 0.0f),
+       QVector3D(1.0f, 1.0f, 0.5f),
+       QVector3D(0.5f,  1.0f, 0.5f),
+       QVector3D(0.0f,  0.75f, 0.0f),
+       QVector3D(0.25f, 0.25f, 0.0f),
+       QVector3D(0.0f,  1.0f, 0.75f),
+  };
 }

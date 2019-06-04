@@ -48,55 +48,6 @@ vec3 expand(vec3 v)
 
 void main()
 {
-//    float d;
-//    d = linearizeDepth(UV);
-//    finalColor = vec3(d,d,d);
-
-//   // vec2 TexCoords = texture(gTexCoords,UV).xy;
-   // finalColor = texture(gNormal,UV).rgb;
-
-//    //Iluminação simples de Phong
-//    vec3 fragPos = texture(gPosition,UV).rgb;
-//    vec3 fragNormal = texture(gNormal,UV).rgb;
-//    vec3 fragTang = texture(gTangente,UV).rgb;
-
-//    vec3 ambient = material.ambient;//Componente da luz ambiente
-//    vec3 specular = vec3(0.0,0.0,0.0);
-
-//    //Normal usada eh a de textura de mapa de normal
-//    vec3 N = fragNormal /*normalize(expand(texture(normalsampler,fragUV).rgb))*/;
-//    //Viewer
-//    vec3 V = -fragPos/*tanViewer*/;
-
-//    finalColor = vec3(0,0,0);
-//    for(int i = 0; i < 2; i++)
-//    {
-//        //Normalizando novamente a luz no espaço tangente
-//        vec3 L = normalize(lights[i].Position - fragPos);
-
-//        //Calcula produto interno entre luz e normal no espaco tangente
-//        float iDif = dot(L,N);
-
-//        //Calcula componente difusa da luz
-//        vec3 diffuse = max(0,iDif) * material.diffuse * lights[i].Color;
-
-//        finalColor += ambient + diffuse;
-
-//        //Se certifica que a luz e a normal nao sao perpendiculares
-//        if( iDif > 0 )
-//        {
-//            //HalfVector
-//            vec3 H = normalize(L + V);
-
-//            float iSpec = pow(max(dot(N,H),0.0),material.shininess);
-
-//            //Calcula componente especular
-//            specular = iSpec * material.specular* lights[i].Color;
-//        }
-
-//        finalColor += specular;
-//    }
-
     if(mode == 0)
     {
         //Fazendo com bump
@@ -158,19 +109,63 @@ void main()
     }
     else if (mode == 1)
     {
-        finalColor = 100*texture(gPosition,UV).rgb;
+        //Iluminação simples de Phong
+        vec3 fragPos = texture(gPosition,UV).rgb;
+        vec3 fragNormal = texture(gNormal,UV).rgb;
+        vec3 fragTang = texture(gTangente,UV).rgb;
+
+        vec3 ambient = material.ambient;//Componente da luz ambiente
+        vec3 specular = vec3(0.0,0.0,0.0);
+
+        //Normal usada eh a de textura de mapa de normal
+        vec3 N = fragNormal /*normalize(expand(texture(normalsampler,fragUV).rgb))*/;
+        //Viewer
+        vec3 V = -fragPos/*tanViewer*/;
+
+        finalColor = vec3(0,0,0);
+        for(int i = 5; i < 6  ; i++)
+        {
+            //Normalizando novamente a luz no espaço tangente
+            vec3 L = normalize(lights[i].Position - fragPos);
+
+            //Calcula produto interno entre luz e normal no espaco tangente
+            float iDif = dot(L,N);
+
+            //Calcula componente difusa da luz
+            vec3 diffuse = max(0,iDif) * material.diffuse * lights[i].Color;
+
+            finalColor += ambient + diffuse;
+
+            //Se certifica que a luz e a normal nao sao perpendiculares
+            if( iDif > 0 )
+            {
+                //HalfVector
+                vec3 H = normalize(L + V);
+
+                float iSpec = pow(max(dot(N,H),0.0),material.shininess);
+
+                //Calcula componente especular
+                specular = iSpec * material.specular* lights[i].Color;
+            }
+
+            finalColor += specular;
+        }
     }
     else if (mode == 2)
     {
-        finalColor = texture(gNormal,UV).rgb;
+        finalColor = 100*texture(gPosition,UV).rgb;
     }
     else if (mode == 3)
+    {
+        finalColor = texture(gNormal,UV).rgb;
+    }
+    else if (mode == 4)
     {
         float d;
         d = linearizeDepth(UV);
         finalColor = vec3(d,d,d);
     }
-    else if (mode == 4)
+    else if (mode == 5)
     {
         finalColor = texture(gTangente,UV).rgb;
     }

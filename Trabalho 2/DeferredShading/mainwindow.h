@@ -26,6 +26,8 @@ private slots:
 
     void on_radioButton_TengentBuffer_clicked();
 
+    void on_radioButton_Phong_clicked();
+
 private:
     Ui::MainWindow *ui;
 };
