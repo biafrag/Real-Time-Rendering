@@ -68,6 +68,6 @@ void main()
 
     finalColor += specular;
 
-    finalColor = normalize(tang);
+    //finalColor = normalize(tang);
 
 }

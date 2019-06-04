@@ -57,6 +57,11 @@ void RenderOpengl::setFile(std::string fileName)
         //printThings();
 }
 
+void RenderOpengl::setMode(int mode)
+{
+    _mode = mode;
+}
+
 int getIndex( int i, int j, int n )
 {
     return j + i * ( n + 1 );
@@ -489,8 +494,9 @@ void RenderOpengl::paintGL()
 //        _programQuad->setUniformValue("lights[1].Color", _colors[0]);
 //    }
     //Variáveis de material e luz
-   _programQuad->setUniformValue("lightPos", /*v * cam.eye*/QVector3D(0,0,300));
+   _programQuad->setUniformValue("lightPos", v * cam.eye/*QVector3D(0,0,300)*/);
 
+   _programQuad->setUniformValue("mode",_mode);
    //printf("COORDS: %f %f %f\n",(v * cam.eye).x(),(v * cam.eye).y(),(v * cam.eye).z());
     //Desenhando os triângulos que formam o cubo
     glDrawArrays(GL_TRIANGLES, 0, (int)_pointsScreen.size());

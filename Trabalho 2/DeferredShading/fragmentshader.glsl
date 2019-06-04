@@ -32,6 +32,7 @@ struct Light {
 const int NR_LIGHTS = 20;
 uniform Light lights[NR_LIGHTS];
 
+uniform int mode;
 float linearizeDepth(vec2 uv)
 {
     float zNear = 0.1;
@@ -96,61 +97,82 @@ void main()
 //        finalColor += specular;
 //    }
 
-    //Fazendo com bump
-    vec3 fragPos = normalize(texture(gPosition,UV).rgb);
-    vec3 fragNormal = normalize(texture(gNormal,UV).rgb);
-    vec3 fragTang = texture(gTangente,UV).rgb;
-
-    //Calculo de espaço tangente
-    //Bitangente no espaço do olho
-    vec3 bitangentVertexEye= cross(fragNormal,fragTang);
-
-    //Matriz de rotação tbn para transformar luz para o eapaço tangente
-    mat3 rotation = transpose(mat3(fragTang,bitangentVertexEye,fragNormal));
-
-
-    //Colocando luz no espaco tangente
-    vec3 tanLight = rotation*normalize(lightPos - fragPos);
-
-    //Viewer no espaco tangente
-    vec3 tanViewer = normalize(rotation*normalize(-fragPos));
-
-    vec3 ambient = material.ambient;//Componente da luz ambiente
-    vec3 specular = vec3(0.0,0.0,0.0);
-
-    //Normal usada eh a de textura de mapa de normal
-    vec3 N = normalize(expand(texture(gTex,UV).rgb));
-
-    //Normalizando novamente a luz no espaço tangente
-    vec3 L = tanLight;
-
-    //Calcula produto interno entre luz e normal no espaco tangente
-    float iDif = dot(tanLight,N);
-
-    //Calcula componente difusa da luz
-    vec3 diffuse = max(0,iDif) * material.diffuse;
-
-    finalColor = ambient + diffuse;
-
-   // finalColor = bitangentVertexEye;//texture(gTangente,UV).rgb;
-   // finalColor = bitangentVertexEye;//texture(bitangentVertexEye, UV).rgb;
-
-    //Se certifica que a luz e a normal nao sao perpendiculares
-    if( iDif > 0 )
+    if(mode == 0)
     {
-        //Viewer
-        vec3 V = tanViewer;
+        //Fazendo com bump
+        vec3 fragPos = normalize(texture(gPosition,UV).rgb);
+        vec3 fragNormal = normalize(texture(gNormal,UV).rgb);
+        vec3 fragTang = texture(gTangente,UV).rgb;
 
-        //HalfVector
-        vec3 H = normalize(L + V);
+        //Calculo de espaço tangente
+        //Bitangente no espaço do olho
+        vec3 bitangentVertexEye= cross(fragNormal,fragTang);
 
-        float iSpec = pow(max(dot(N,H),0.0),material.shininess);
+        //Matriz de rotação tbn para transformar luz para o eapaço tangente
+        mat3 rotation = transpose(mat3(fragTang,bitangentVertexEye,fragNormal));
 
-        //Calcula componente especular
-        specular = iSpec * material.specular;
+
+        //Colocando luz no espaco tangente
+        vec3 tanLight = rotation*normalize(lightPos - fragPos);
+
+        //Viewer no espaco tangente
+        vec3 tanViewer = rotation*(-fragPos);
+
+        vec3 ambient = material.ambient;//Componente da luz ambiente
+        vec3 specular = vec3(0.0,0.0,0.0);
+
+        //Normal usada eh a de textura de mapa de normal
+        vec3 N = normalize(expand(texture(gTex,UV).rgb));
+
+        //Normalizando novamente a luz no espaço tangente
+        vec3 L = tanLight;
+
+        //Calcula produto interno entre luz e normal no espaco tangente
+        float iDif = dot(tanLight,N);
+
+        //Calcula componente difusa da luz
+        vec3 diffuse = max(0,iDif) * material.diffuse;
+
+        finalColor = ambient + diffuse;
+
+        //finalColor = fragTang;//texture(gTangente,UV).rgb;
+       // finalColor = bitangentVertexEye;//texture(bitangentVertexEye, UV).rgb;
+
+        //Se certifica que a luz e a normal nao sao perpendiculares
+        if( iDif > 0 )
+        {
+            //Viewer
+            vec3 V = tanViewer;
+
+            //HalfVector
+            vec3 H = normalize(L + V);
+
+            float iSpec = pow(max(dot(N,H),0.0),material.shininess);
+
+            //Calcula componente especular
+            specular = iSpec * material.specular;
+        }
+
+        finalColor += specular;
+
     }
-
-    finalColor += specular;
-
+    else if (mode == 1)
+    {
+        finalColor = 100*texture(gPosition,UV).rgb;
+    }
+    else if (mode == 2)
+    {
+        finalColor = texture(gNormal,UV).rgb;
+    }
+    else if (mode == 3)
+    {
+        float d;
+        d = linearizeDepth(UV);
+        finalColor = vec3(d,d,d);
+    }
+    else if (mode == 4)
+    {
+        finalColor = texture(gTangente,UV).rgb;
+    }
 
 }

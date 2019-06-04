@@ -28,8 +28,11 @@ public:
     void resizeGL(int w, int h) override;
     void paintGL() override;
     void setFile(std::string fileName);
+    void setMode(int mode);
 
 private:
+
+    int _mode{0};
     //Classe do qt que permite os shaders serem linkados e usados
     QOpenGLShaderProgram* _programGB{nullptr};
 

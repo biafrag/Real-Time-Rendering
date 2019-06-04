@@ -16,6 +16,48 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QRadioButton" name="radioButton_Result">
+        <property name="text">
+         <string>Result</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButton_PositionBuffer">
+        <property name="text">
+         <string>PositionBuffer</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButton_NormalBuffer">
+        <property name="text">
+         <string>NormalBuffer</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButton_ZBuffer">
+        <property name="text">
+         <string>ZBuffer</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButton_TengentBuffer">
+        <property name="text">
+         <string>TangentBuffer</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="1" column="0">
      <widget class="RenderOpengl" name="openGLWidget"/>
     </item>
    </layout>
