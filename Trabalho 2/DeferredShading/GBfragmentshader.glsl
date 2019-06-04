@@ -18,7 +18,7 @@ uniform sampler2D normalSampler;
 void main()
 {
     // store the fragment position vector in the first gbuffer texture
-   gPosition = normalize(fragPos);
+   gPosition = fragPos;
 
    gNormal = normalize(fragNormal);
 

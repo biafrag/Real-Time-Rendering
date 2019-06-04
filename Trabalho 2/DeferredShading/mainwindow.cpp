@@ -45,3 +45,8 @@ void MainWindow::on_radioButton_TengentBuffer_clicked()
 {
     ui->openGLWidget->setMode(5);
 }
+
+void MainWindow::on_radioButton_Bump_clicked()
+{
+    ui->openGLWidget->setMode(6);
+}

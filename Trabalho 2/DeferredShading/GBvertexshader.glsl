@@ -29,7 +29,7 @@
         gl_Position = mvp * vec4( vertexPos, 1 );
 
         //Posição do vértice no espaço de olho
-        fragPos =  normalize((mv * vec4( vertexPos, 1 ) ).xyz);
+        fragPos =  (mv * vec4( vertexPos, 1 ) ).xyz;
 
         //Posição da normal no espaço do olho
         fragNormal = normalize(( normalMatrix * vec4( vertexNormal, 0 ) ).xyz);

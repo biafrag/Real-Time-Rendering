@@ -34,7 +34,9 @@ void readFile(std::string fileName, std::vector<QVector3D>& points, std::vector<
           myfile >> number;
           point.setZ(number);
           //std::cout << point.x() << " " << point.y() << " "<< point.z() << " " << std::endl;
+          std::cout << point.length() << std::endl;
           points.push_back(point);
+
           myfile >> type;
       }
       else if(type == "vt")

@@ -28,6 +28,8 @@ private slots:
 
     void on_radioButton_Phong_clicked();
 
+    void on_radioButton_Bump_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

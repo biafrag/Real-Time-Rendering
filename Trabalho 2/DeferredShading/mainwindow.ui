@@ -28,6 +28,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QRadioButton" name="radioButton_Bump">
+        <property name="text">
+         <string>Bump</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QRadioButton" name="radioButton_Phong">
         <property name="text">
          <string>Phong</string>

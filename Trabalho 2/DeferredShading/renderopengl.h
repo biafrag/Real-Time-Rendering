@@ -105,7 +105,7 @@ private:
     void createFrameBuffer();
     void createScreenQuad();
     void updateFrameBuffer();
-    void setUniformArrays();
+    void setUniformArrays(QMatrix4x4 mv);
 
     //Arcball
     bool mousepress;

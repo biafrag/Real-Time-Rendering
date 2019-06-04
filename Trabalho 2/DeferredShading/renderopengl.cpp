@@ -13,7 +13,7 @@ RenderOpengl::RenderOpengl(QWidget* parent)
     :QOpenGLWidget(parent)
 {
     cam.at = QVector3D(0.0f,0.f,0.f);
-    cam.eye =  QVector3D(0.0f,0.f,300.f);
+    cam.eye =  QVector3D(0.0f,0.f,6.f);
     cam.up = QVector3D(0.f,2.f,0.f);
     cam.zNear = 0.1f;
     cam.zFar  = 1000.f;
@@ -375,7 +375,7 @@ void RenderOpengl::paintGL()
      _view.setToIdentity();
      _view.lookAt(cam.eye, cam.at, cam.up);
      _proj.setToIdentity();
-     _proj.perspective((cam.fovy*3.14)/180, (float)cam.width/cam.height, cam.zNear, cam.zFar);
+     _proj.perspective(cam.fovy, (float)cam.width/cam.height, cam.zNear, cam.zFar);
 
     //Definindo matrizes para passar para os shaders
 
@@ -480,13 +480,13 @@ void RenderOpengl::paintGL()
     _programQuad->setUniformValue("material.ambient", QVector3D(0.2f,0.2f,0.2f));
     _programQuad->setUniformValue("material.diffuse", QVector3D(0.8f,0.8f,0.8f));
     _programQuad->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
-    _programQuad->setUniformValue("material.shininess", 100.0f);
+    _programQuad->setUniformValue("material.shininess", 128.0f);
 
     //Colocando luzes
 
-    setUniformArrays();
+    setUniformArrays(v);
     //Variáveis de material e luz
-   _programQuad->setUniformValue("lightPos", v * cam.eye/*QVector3D(0,0,300)*/);
+   _programQuad->setUniformValue("lightPos", v*cam.eye/*QVector3D(0,0,300)*/);
 
    _programQuad->setUniformValue("mode",_mode);
    //printf("COORDS: %f %f %f\n",(v * cam.eye).x(),(v * cam.eye).y(),(v * cam.eye).z());
@@ -967,35 +967,39 @@ void RenderOpengl::updateFrameBuffer()
 
 }
 
-void RenderOpengl::setUniformArrays()
+void RenderOpengl::setUniformArrays(QMatrix4x4 v)
 {
     //Colocando luzes
-    QVector3D pos(0,200,0);
-    pos = _view*pos;
+    QVector3D pos(100,100,20);
+    pos = v*pos;
     _programQuad->setUniformValue("lights[0].Position", pos);
     _programQuad->setUniformValue("lights[0].Color", QVector3D(0,0,1));
-    pos =  QVector3D(0,300,600);
-    pos = _view*pos;
+    pos =  QVector3D(100,0,20);
+    pos = v*pos;
     _programQuad->setUniformValue("lights[1].Position",pos );
     _programQuad->setUniformValue("lights[1].Color", _colors[0]);
-    pos =  QVector3D(300,300,600);
-    pos = _view*pos;
+    pos =  QVector3D(-100,0,20);
+    pos = v*pos;
     _programQuad->setUniformValue("lights[2].Position", pos );
     _programQuad->setUniformValue("lights[2].Color", _colors[1]);
-    pos =  QVector3D(0,0,300);
-    pos = _view*pos;
+    pos =  QVector3D(0,100,20);
+    pos = v*pos;
     _programQuad->setUniformValue("lights[3].Position", pos );
     _programQuad->setUniformValue("lights[3].Color", _colors[2]);
-    pos +=  QVector3D(100,200,0);
+    pos =  QVector3D(-100,-100,20);
+    pos = v*pos;
     _programQuad->setUniformValue("lights[4].Position", pos );
     _programQuad->setUniformValue("lights[4].Color", _colors[3]);
-    pos +=  QVector3D(100,200,0);
+    pos =  QVector3D(-100,100,20);
+    pos = v*pos;
     _programQuad->setUniformValue("lights[5].Position", pos );
     _programQuad->setUniformValue("lights[5].Color", _colors[4]);
-    pos +=  QVector3D(100,200,0);
+    pos =  QVector3D(100,-100,20);
+    pos = v*pos;
     _programQuad->setUniformValue("lights[6].Position", pos );
     _programQuad->setUniformValue("lights[6].Color", _colors[5]);
-    pos +=  QVector3D(100,200,0);
+    pos =  QVector3D(100,100,20);
+    pos = v*pos;
     _programQuad->setUniformValue("lights[7].Position", pos );
     _programQuad->setUniformValue("lights[7].Color", _colors[6]);
     pos +=  QVector3D(100,200,0);
