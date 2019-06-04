@@ -46,6 +46,7 @@ private:
     std::vector<QVector3D> _bitangents; // vetor de tangentes para cada vértice
 
     std::vector<QVector3D> _pointsScreen; //Vetor de cada ponto do meu objeto que será renderizado
+    std::vector<QVector3D> _lights;
 
    unsigned int _pointsBuffer = static_cast<unsigned int>(-1);
    unsigned int _normalsBuffer = static_cast<unsigned int>(-1);

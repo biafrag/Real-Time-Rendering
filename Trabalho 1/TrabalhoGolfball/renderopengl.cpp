@@ -51,6 +51,7 @@ void RenderOpengl::setFile(std::string fileName)
         organizingData();
         //createSphere();
         computeTangents();
+        printThings();
 }
 
 int getIndex( int i, int j, int n )
@@ -262,38 +263,38 @@ void RenderOpengl::initializeGL()
 }
 void RenderOpengl::printThings()
 {
-    printf("Points: \n");
-    for(int i = 0; i< _points.size(); i ++)
-    {
-        printf( "%f %f %f\n",_points[i].x(),_points[i].y(),_points[i].z());
-    }
-
-
-    printf("Normals: \n");
-    for(int i = 0; i< _normals.size(); i ++)
-    {
-        printf( "%f %f %f\n",_normals[i].x(),_normals[i].y(),_normals[i].z());
-    }
-
-
-    printf("Textura: \n");
-    for(int i = 0; i< _texCoords.size(); i ++)
-    {
-        printf( "%f %f \n",_texCoords[i].x(),_texCoords[i].y());
-    }
-
-
-    printf("Indices: \n");
-    for(int i = 0; i< _indexPoints.size(); i ++)
-    {
-        printf( "%d ",_indexPoints[i]);
-    }
-
-//    printf("Tangentes: \n");
-//    for(int i = 0; i< _tangents.size(); i++)
+//    printf("Points: \n");
+//    for(int i = 0; i< _points.size(); i ++)
 //    {
-//        printf( "%d ",_tangents[i]);
+//        printf( "%f %f %f\n",_points[i].x(),_points[i].y(),_points[i].z());
 //    }
+
+
+//    printf("Normals: \n");
+//    for(int i = 0; i< _normals.size(); i ++)
+//    {
+//        printf( "%f %f %f\n",_normals[i].x(),_normals[i].y(),_normals[i].z());
+//    }
+
+
+//    printf("Textura: \n");
+//    for(int i = 0; i< _texCoords.size(); i ++)
+//    {
+//        printf( "%f %f \n",_texCoords[i].x(),_texCoords[i].y());
+//    }
+
+
+//    printf("Indices: \n");
+//    for(int i = 0; i< _indexPoints.size(); i ++)
+//    {
+//        printf( "%d ",_indexPoints[i]);
+//    }
+
+    printf("Tangentes: \n");
+    for(int i = 0; i< _tangents.size(); i++)
+    {
+        printf("%f %f %f\n",_tangents[i].x(),_tangents[i].y(),_tangents[i].z());
+    }
 }
 
 
@@ -399,7 +400,7 @@ void RenderOpengl::paintGL()
     //inversa transposta da model-view
     _program->setUniformValue("normalMatrix", mv.inverted().transposed());
     //Variáveis de material e luz
-    _program->setUniformValue("lightPos", /*v * cam.eye*/v*QVector3D(5,5,-5));
+    _program->setUniformValue("lightPos", v * cam.eye/*v*QVector3D(5,5,-5)*/);
 
     _program->setUniformValue("hasDT", false);
 

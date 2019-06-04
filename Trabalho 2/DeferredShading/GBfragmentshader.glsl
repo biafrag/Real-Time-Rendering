@@ -24,8 +24,8 @@ void main()
 
    gTangente = normalize(fragTang);
 
-   gTex = texture(normalSampler,fragUV).rgb;
+   gTex = normalize(texture(normalSampler,fragUV).rgb);
 
-   finalColor = gTangente;
+   //finalColor = gTangente;
 
 }

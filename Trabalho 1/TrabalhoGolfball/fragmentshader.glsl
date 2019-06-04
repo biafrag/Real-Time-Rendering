@@ -14,7 +14,8 @@ uniform Material material;
 in vec2 fragUV; //Coordenada de textura
 in vec3 light; //Posição da luz no espaço tangente
 in vec3 tanViewer; // Posição do viewer no espaço tangente
-
+in vec3 tang;
+in vec3 fragNormal;
 uniform sampler2D sampler; //Textura difusa
 uniform sampler2D normalsampler; // Textura de mapa de normal
 uniform bool hasDT; //Variavel que diz se vai ter textura difusa ou não
@@ -66,5 +67,7 @@ void main()
     }
 
     finalColor += specular;
+
+    finalColor = normalize(tang);
 
 }

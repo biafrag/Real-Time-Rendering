@@ -29,14 +29,14 @@
         gl_Position = mvp * vec4( vertexPos, 1 );
 
         //Posição do vértice no espaço de olho
-        fragPos =  (mv * vec4( vertexPos, 1 ) ).xyz;
+        fragPos =  normalize((mv * vec4( vertexPos, 1 ) ).xyz);
 
         //Posição da normal no espaço do olho
-        fragNormal = ( normalMatrix * vec4( vertexNormal, 0 ) ).xyz;
+        fragNormal = normalize(( normalMatrix * vec4( vertexNormal, 0 ) ).xyz);
 
         //Parte do bump
         //Posição da tangente no espaço do olho
-        fragTang = ( normalMatrix * vec4( tangent, 0 ) ).xyz;
+        fragTang = normalize(( normalMatrix * vec4( tangent, 0 ) ).xyz);
         //fragTang = tangent;
 
         fragUV = vertexTexCoord;

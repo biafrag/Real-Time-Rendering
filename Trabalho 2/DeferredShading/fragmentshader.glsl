@@ -24,6 +24,14 @@ uniform sampler2D gLight;
 uniform sampler2D gTanViewer;
 uniform vec3 lightPos; // Posição da luz em coordenada do olho
 
+
+struct Light {
+    vec3 Position;
+    vec3 Color;
+};
+const int NR_LIGHTS = 20;
+uniform Light lights[NR_LIGHTS];
+
 float linearizeDepth(vec2 uv)
 {
     float zNear = 0.1;
@@ -56,87 +64,93 @@ void main()
 
 //    //Normal usada eh a de textura de mapa de normal
 //    vec3 N = fragNormal /*normalize(expand(texture(normalsampler,fragUV).rgb))*/;
+//    //Viewer
+//    vec3 V = -fragPos/*tanViewer*/;
 
-//    //Normalizando novamente a luz no espaço tangente
-//    vec3 L = normalize(lightPos - fragPos);
-
-//    //Calcula produto interno entre luz e normal no espaco tangente
-//    float iDif = dot(L,N);
-
-//    //Calcula componente difusa da luz
-//    vec3 diffuse = max(0,iDif) * material.diffuse * texture(gTex,UV).rgb;
-
-//    finalColor = ambient + diffuse;
-
-//    //Se certifica que a luz e a normal nao sao perpendiculares
-//    if( iDif > 0 )
+//    finalColor = vec3(0,0,0);
+//    for(int i = 0; i < 2; i++)
 //    {
-//        //Viewer
-//        vec3 V = -fragPos/*tanViewer*/;
+//        //Normalizando novamente a luz no espaço tangente
+//        vec3 L = normalize(lights[i].Position - fragPos);
 
-//        //HalfVector
-//        vec3 H = normalize(L + V);
+//        //Calcula produto interno entre luz e normal no espaco tangente
+//        float iDif = dot(L,N);
 
-//        float iSpec = pow(max(dot(N,H),0.0),material.shininess);
+//        //Calcula componente difusa da luz
+//        vec3 diffuse = max(0,iDif) * material.diffuse * lights[i].Color;
 
-//        //Calcula componente especular
-//        specular = iSpec * material.specular* texture(gTex,UV).rgb;
+//        finalColor += ambient + diffuse;
+
+//        //Se certifica que a luz e a normal nao sao perpendiculares
+//        if( iDif > 0 )
+//        {
+//            //HalfVector
+//            vec3 H = normalize(L + V);
+
+//            float iSpec = pow(max(dot(N,H),0.0),material.shininess);
+
+//            //Calcula componente especular
+//            specular = iSpec * material.specular* lights[i].Color;
+//        }
+
+//        finalColor += specular;
 //    }
-
-//    finalColor += specular;
-
 
     //Fazendo com bump
     vec3 fragPos = normalize(texture(gPosition,UV).rgb);
     vec3 fragNormal = normalize(texture(gNormal,UV).rgb);
-    vec3 fragTang = normalize(texture(gTangente,UV).rgb);
+    vec3 fragTang = texture(gTangente,UV).rgb;
 
     //Calculo de espaço tangente
     //Bitangente no espaço do olho
-    vec3 bitangentVertexEye= normalize(cross(fragNormal,fragTang));
+    vec3 bitangentVertexEye= cross(fragNormal,fragTang);
 
-//    //Matriz de rotação tbn para transformar luz para o eapaço tangente
-//    mat3 rotation = transpose(mat3(fragTang,bitangentVertexEye,fragNormal));
+    //Matriz de rotação tbn para transformar luz para o eapaço tangente
+    mat3 rotation = transpose(mat3(fragTang,bitangentVertexEye,fragNormal));
 
-//    //Colocando luz no espaco tangente
-//    vec3 tanLight = normalize(rotation*normalize(lightPos - fragPos));
 
-//    //Viewer no espaco tangente
-//    vec3 tanViewer = normalize(rotation*normalize(-fragPos));
+    //Colocando luz no espaco tangente
+    vec3 tanLight = rotation*normalize(lightPos - fragPos);
 
-//    vec3 ambient = material.ambient;//Componente da luz ambiente
-//    vec3 specular = vec3(0.0,0.0,0.0);
+    //Viewer no espaco tangente
+    vec3 tanViewer = normalize(rotation*normalize(-fragPos));
 
-//    //vec2 TexCoords = texture(gTexCoords,UV).xy;
-//    //Normal usada eh a de textura de mapa de normal
-//    vec3 N = normalize(expand(texture(gTex,UV).rgb));
+    vec3 ambient = material.ambient;//Componente da luz ambiente
+    vec3 specular = vec3(0.0,0.0,0.0);
 
-//    //Normalizando novamente a luz no espaço tangente
-//    vec3 L = normalize(tanLight);
+    //Normal usada eh a de textura de mapa de normal
+    vec3 N = normalize(expand(texture(gTex,UV).rgb));
 
-//    //Calcula produto interno entre luz e normal no espaco tangente
-//    float iDif = dot(tanLight,N);
+    //Normalizando novamente a luz no espaço tangente
+    vec3 L = tanLight;
 
-//    //Calcula componente difusa da luz
-//    vec3 diffuse = max(0,iDif) * material.diffuse;
+    //Calcula produto interno entre luz e normal no espaco tangente
+    float iDif = dot(tanLight,N);
 
-    finalColor = normalize(texture(gTangente, UV).rgb);
+    //Calcula componente difusa da luz
+    vec3 diffuse = max(0,iDif) * material.diffuse;
 
-//    //Se certifica que a luz e a normal nao sao perpendiculares
-//    if( iDif > 0 )
-//    {
-//        //Viewer
-//        vec3 V = tanViewer;
+    finalColor = ambient + diffuse;
 
-//        //HalfVector
-//        vec3 H = normalize(L + V);
+   // finalColor = bitangentVertexEye;//texture(gTangente,UV).rgb;
+   // finalColor = bitangentVertexEye;//texture(bitangentVertexEye, UV).rgb;
 
-//        float iSpec = pow(max(dot(N,H),0.0),material.shininess);
+    //Se certifica que a luz e a normal nao sao perpendiculares
+    if( iDif > 0 )
+    {
+        //Viewer
+        vec3 V = tanViewer;
 
-//        //Calcula componente especular
-//        specular = iSpec * material.specular;
-//    }
+        //HalfVector
+        vec3 H = normalize(L + V);
 
-//    finalColor += specular;
+        float iSpec = pow(max(dot(N,H),0.0),material.shininess);
+
+        //Calcula componente especular
+        specular = iSpec * material.specular;
+    }
+
+    finalColor += specular;
+
 
 }

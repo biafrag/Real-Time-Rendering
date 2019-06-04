@@ -54,6 +54,7 @@ void RenderOpengl::setFile(std::string fileName)
         organizingData();
         //createSphere();
         computeTangents();
+        //printThings();
 }
 
 int getIndex( int i, int j, int n )
@@ -271,31 +272,37 @@ void RenderOpengl::initializeGL()
 }
 void RenderOpengl::printThings()
 {
-    printf("Points: \n");
-    for(int i = 0; i< _points.size(); i ++)
+//    printf("Points: \n");
+//    for(int i = 0; i< _points.size(); i ++)
+//    {
+//        printf( "%f %f %f\n",_points[i].x(),_points[i].y(),_points[i].z());
+//    }
+
+
+//    printf("Normals: \n");
+//    for(int i = 0; i< _normals.size(); i ++)
+//    {
+//        printf( "%f %f %f\n",_normals[i].x(),_normals[i].y(),_normals[i].z());
+//    }
+
+
+//    printf("Textura: \n");
+//    for(int i = 0; i< _texCoords.size(); i ++)
+//    {
+//        printf( "%f %f \n",_texCoords[i].x(),_texCoords[i].y());
+//    }
+
+
+//    printf("Indices: \n");
+//    for(int i = 0; i< _indexPoints.size(); i ++)
+//    {
+//        printf( "%d ",_indexPoints[i]);
+//    }
+
+    printf("Tangentes: \n");
+    for(int i = 0; i< _tangents.size(); i++)
     {
-        printf( "%f %f %f\n",_points[i].x(),_points[i].y(),_points[i].z());
-    }
-
-
-    printf("Normals: \n");
-    for(int i = 0; i< _normals.size(); i ++)
-    {
-        printf( "%f %f %f\n",_normals[i].x(),_normals[i].y(),_normals[i].z());
-    }
-
-
-    printf("Textura: \n");
-    for(int i = 0; i< _texCoords.size(); i ++)
-    {
-        printf( "%f %f \n",_texCoords[i].x(),_texCoords[i].y());
-    }
-
-
-    printf("Indices: \n");
-    for(int i = 0; i< _indexPoints.size(); i ++)
-    {
-        printf( "%d ",_indexPoints[i]);
+        printf("%f %f %f\n",_tangents[i].x(),_tangents[i].y(),_tangents[i].z());
     }
 }
 
@@ -398,7 +405,6 @@ void RenderOpengl::paintGL()
     glUniform1i(blah,0);
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexPoints.size()), GL_UNSIGNED_INT, nullptr);
 
-
     //SEGUNDA PASSADA
     //Dando bind no programa e no vao
     _programQuad->bind();
@@ -471,9 +477,21 @@ void RenderOpengl::paintGL()
     _programQuad->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
     _programQuad->setUniformValue("material.shininess", 100.0f);
 
-    //Variáveis de material e luz
-   _programQuad->setUniformValue("lightPos", v * cam.eye/*v*QVector3D(0,300,300)*/);
+    //Colocando luzes
+//    _programQuad->setUniformValue("lights[0].Position", v * cam.eye);
+//    _programQuad->setUniformValue("lights[0].Color", QVector3D(1,1,1));
 
+//    QVector3D pos(0,0,0);
+//    for(int i = 1; i < 20; i++)
+//    {
+//        pos +=  QVector3D(300,300,0);
+//        _programQuad->setUniformValue("lights[1].Position",v*cam.eye + v*QVector3D(700,700,0) );
+//        _programQuad->setUniformValue("lights[1].Color", _colors[0]);
+//    }
+    //Variáveis de material e luz
+   _programQuad->setUniformValue("lightPos", /*v * cam.eye*/QVector3D(0,0,300));
+
+   //printf("COORDS: %f %f %f\n",(v * cam.eye).x(),(v * cam.eye).y(),(v * cam.eye).z());
     //Desenhando os triângulos que formam o cubo
     glDrawArrays(GL_TRIANGLES, 0, (int)_pointsScreen.size());
     update();
@@ -737,6 +755,101 @@ void RenderOpengl::computeTangents()
             _tangents[i] = QVector3D(t.x(), t.y(), t.z());
         }
 
+        //Outra Abordagem do slide
+//    std::vector<QVector3D> auxTang;
+//        for(int i = 0; i<_indexPoints.size()/3;i++)
+//        {
+//            int id0 = _indexPoints[3*i];
+//            int id1 = _indexPoints[3*i + 1];
+//            int id2 = _indexPoints[3*i + 2];
+//            QVector3D Gx = QVector3D(_points[id1].x(),_texCoords[id1].y(),_texCoords[id1].y());
+//            QVector3D Hx = QVector3D(_points[id0].x(),_texCoords[id0].x(),_texCoords[id0].y());
+//            QVector3D Rx = QVector3D(_points[id2].x(),_texCoords[id2].x(),_texCoords[id2].y());
+
+//            QVector3D axbxcx = QVector3D::crossProduct((Gx - Hx),(Rx-Hx));
+//            //float dx = QVector3D::dotProduct(-axbxcx,H);
+
+//            float ax = axbxcx.x();
+//            float bx = axbxcx.y();
+//            float cx = axbxcx.z();
+
+//            float tx = -bx/ax;
+
+//            QVector3D Gy = QVector3D(_points[id1].y(),_texCoords[id1].x(),_texCoords[id1].y());
+//            QVector3D Hy = QVector3D(_points[id0].y(),_texCoords[id0].x(),_texCoords[id0].y());
+//            QVector3D Ry = QVector3D(_points[id2].y(),_texCoords[id2].x(),_texCoords[id2].y());
+
+//            QVector3D aybycy = QVector3D::crossProduct((Gy - Hy),(Ry-Hy));
+//            //float dx = QVector3D::dotProduct(-axbxcx,H);
+
+//            float ay = aybycy.x();
+//            float by = aybycy.y();
+//            float cy = aybycy.z();
+
+//            float ty = -by/ay;
+
+//            QVector3D Gz = QVector3D(_points[id1].z(),_texCoords[id1].x(),_texCoords[id1].y());
+//            QVector3D Hz = QVector3D(_points[id0].z(),_texCoords[id0].x(),_texCoords[id0].y());
+//            QVector3D Rz = QVector3D(_points[id2].z(),_texCoords[id2].x(),_texCoords[id2].y());
+
+//            QVector3D azbzcz = QVector3D::crossProduct((Gz - Hz),(Rz-Hz));
+//            //float dx = QVector3D::dotProduct(-axbxcx,H);
+
+//            float az = azbzcz.x();
+//            float bz = azbzcz.y();
+//            float cz = azbzcz.z();
+
+//            float tz = -bz/az;
+
+//            _tangents.push_back(QVector3D(tx,ty,tz));
+//            _tangents.push_back(QVector3D(tx,ty,tz));
+//            _tangents.push_back(QVector3D(tx,ty,tz));
+//        }
+
+      //Outra abordagem
+//    for ( int i=0; i<_indexPoints.size()/3; i++)
+//    {
+
+//            int id0 = _indexPoints[3*i];
+//            int id1 = _indexPoints[3*i + 1];
+//            int id2 = _indexPoints[3*i + 2];
+
+//            int idv0 = _indexTex[3*i];
+//            int idv1 = _indexTex[3*i + 1];
+//            int idv2 = _indexTex[3*i + 2];
+
+//            // Shortcuts for vertices
+//            QVector3D v0 = _points[id0];
+//            QVector3D v1 = _points[id1];
+//            QVector3D v2 = _points[id2];
+
+//            // Shortcuts for UVs
+//            QVector2D uv0 = _texCoords[id0];
+//            QVector2D uv1 = _texCoords[id1];
+//            QVector2D uv2 = _texCoords[id2];
+
+//            // Edges of the triangle : position delta
+//            QVector3D deltaPos1 = v1-v0;
+//            QVector3D deltaPos2 = v2-v0;
+
+//            // UV delta
+//            QVector2D deltaUV1 = uv1-uv0;
+//            QVector2D deltaUV2 = uv2-uv0;
+//    //We can now use our formula to compute the tangent and the bitangent :
+
+//            float r = 1.0f / (deltaUV1.x() * deltaUV2.y() - deltaUV1.y() * deltaUV2.x());
+//            QVector3D tangent = (deltaPos1 * deltaUV2.y()   - deltaPos2 * deltaUV1.y())*r;
+//            QVector3D bitangent = (deltaPos2 * deltaUV1.x()   - deltaPos1 * deltaUV2.x())*r;
+//   // Finally, we fill the *tangents *and *bitangents *buffers. Remember, these buffers are not indexed yet, so each vertex has its own copy.
+
+//            // Set the same tangent for all three vertices of the triangle.
+//            // They will be merged later, in vboindexer.cpp
+//            _tangents.push_back(tangent);
+//            _tangents.push_back(tangent);
+//            _tangents.push_back(tangent);
+
+//    }
+
 }
 
 void RenderOpengl::createFrameBuffer()
@@ -866,5 +979,29 @@ void RenderOpengl::createScreenQuad()
          QVector3D(-1.0f,  1.0f, 0.0f),
          QVector3D(1.0f, -1.0f, 0.0f),
          QVector3D(1.0f,  1.0f, 0.0f),
+    };
+
+   //Create buffer of color of the lights
+   _colors = {
+         QVector3D(0.5f, 0.0f, 0.0f),
+         QVector3D(0.0f, 0.5f, 0.0f),
+         QVector3D(0.0f,  0.0f, 0.5f),
+         QVector3D(1.0f,  0.0f, 0.0f),
+         QVector3D(0.0f, 1.0f, 0.0f),
+         QVector3D(0.0f,  0.0f, 1.0f),
+         QVector3D(0.5f, 0.5f, 0.0f),
+         QVector3D(0.0f, 0.5f, 0.5f),
+         QVector3D(0.5f,  0.0f, 0.5f),
+         QVector3D(1.0f,  1.0f, 0.0f),
+         QVector3D(0.0f, 1.0f, 1.0f),
+         QVector3D(1.0f,  0.0f, 1.0f),
+         QVector3D(0.5f, 1.0f, 0.0f),
+         QVector3D(0.5f,  0.0f, 1.0f),
+         QVector3D(1.0f, 0.5f, 0.0f),
+         QVector3D(1.0f, 1.0f, 0.5f),
+         QVector3D(0.5f,  1.0f, 0.5f),
+         QVector3D(0.0f,  0.75f, 0.0f),
+         QVector3D(0.25f, 0.25f, 0.0f),
+         QVector3D(0.0f,  1.0f, 0.75f),
     };
 }
