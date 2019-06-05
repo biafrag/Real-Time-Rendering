@@ -1,4 +1,4 @@
-#version 330 core
+#version 410 core
 
 layout (location = 0) out vec3 gPosition;
 layout (location = 1) out vec3 gNormal;
@@ -22,7 +22,7 @@ void main()
 
    gNormal = normalize(fragNormal);
 
-   gTangente = fragTang;
+   gTangente = normalize(fragTang);
    //gTangente = length(gTangente) == 0 ? vec3(1, 0, 0) : vec3(0, 1, 0);
 
    gTex = normalize(texture(normalSampler,fragUV).rgb);

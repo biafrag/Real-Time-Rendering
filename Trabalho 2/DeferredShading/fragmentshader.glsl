@@ -1,4 +1,4 @@
-#version 330 core
+#version 410 core
 
 struct Material //Propriedades do material
 {
@@ -77,10 +77,10 @@ void main()
        // finalColor += specular;
 
         float constant = 1.0;
-        float linear = 2;
-        float quadratic = 0.032;
+        float linear = 0.09;
+        float quadratic = 0.0032;
         finalColor = vec3(0,0,0);
-        for(int i = 0; i < 1; i++)
+        for(int i = 0; i < 20; i++)
         {
             //Colocando luz no espaco tangente
             vec3 tanLight = rotation*normalize(lights[i].Position - fragPos);
@@ -89,8 +89,8 @@ void main()
             //Normalizando novamente a luz no espaço tangente
             vec3 L = normalize(tanLight);
 
-           // float distance = length(lights[i].Position - fragPos);
-            float attenuation = 1.0;///(constant + linear*distance + quadratic*(distance*distance));
+            float distance = length(lights[i].Position - fragPos);
+            float attenuation = 1.0/(constant + linear*distance + quadratic*(distance*distance));
 
             //Calcula produto interno entre luz e normal no espaco tangente
             float iDif = dot(L,N);
@@ -120,50 +120,50 @@ void main()
         //Iluminação simples de Phong
         vec3 fragPos = texture(gPosition,UV).rgb;
         vec3 fragNormal = texture(gNormal,UV).rgb;
-        vec3 fragTang = texture(gTangente,UV).rgb;
-
-        vec3 ambient = material.ambient;//Componente da luz ambiente
-        vec3 specular = vec3(0.0,0.0,0.0);
 
         //Normal usada eh a de textura de mapa de normal
-        vec3 N = normalize(fragNormal) /*normalize(expand(texture(normalsampler,fragUV).rgb))*/;
+        vec3 N = normalize(fragNormal);
         //Viewer
-        vec3 V = normalize(-fragPos)/*tanViewer*/;
+        vec3 V = normalize(-fragPos);
         float constant = 1;
         float linear = 0.0009;
-        float quadratic = 0.00032;;
+        float quadratic = 0.000032;
 
         finalColor = vec3(0,0,0);
 
-        for(int i = 0; i < 1; i++)
+        vec3 ambient = material.ambient;//Componente da luz ambiente
+        vec3 specular = vec3(0.0,0.0,0.0);
+        for(int i = 5; i < 10; i++)
         {
-            //Normalizando novamente a luz no espaço tangente
+            //Normalizando novamente a direção da luz
             vec3 L = normalize(lights[i].Position - fragPos);
 
             float distance = length(lights[i].Position - fragPos);
-            float attenuation = 1.0;///(constant + linear*distance + quadratic*(distance*distance));
-
-            //Calcula produto interno entre luz e normal no espaco tangente
+            float attenuation = 1.0/(constant + linear*distance + quadratic*(distance*distance));
+           // float attenuation = 1;
+            //Calcula produto interno entre luz e normal
             float iDif = dot(L,N);
 
             //Calcula componente difusa da luz
             vec3 diffuse = max(0,iDif) * material.diffuse * lights[i].Color;
 
-            finalColor += attenuation * (ambient * lights[i].Color + diffuse );
+            finalColor += (ambient* lights[i].Color + diffuse ) * attenuation;
 
+            //HalfVector
+            vec3 H = normalize(L + V);
             //Se certifica que a luz e a normal nao sao perpendiculares
             if( iDif > 0 )
             {
                 //HalfVector
                 vec3 r = normalize(reflect(-L, N));
 
-                float iSpec = pow(max(dot(V,r),0.0),material.shininess);
+                float iSpec = pow(max(dot(r,V),0.0),material.shininess);
 
                 //Calcula componente especular
                 specular = iSpec * material.specular * lights[i].Color;
             }
 
-            finalColor += specular*attenuation;
+            finalColor += specular;
 
         }
     }

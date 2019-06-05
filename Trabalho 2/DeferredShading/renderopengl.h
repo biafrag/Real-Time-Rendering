@@ -94,6 +94,9 @@ private:
    unsigned int _normalMap;
    int time{0};
    bool _isgoingRight{true};
+   bool _isgoingUp{true};
+   bool _isgoingUpDiagonal{true};
+   bool _isgoingDownDiagonal{true};
 
 private:
     void createVAO(); //Cria VAO
@@ -108,6 +111,7 @@ private:
     void createScreenQuad();
     void updateFrameBuffer();
     void setUniformArrays(QMatrix4x4 v);
+    void updateLights();
 
     //Arcball
     bool mousepress;
