@@ -97,6 +97,7 @@ private:
    bool _isgoingUp{true};
    bool _isgoingUpDiagonal{true};
    bool _isgoingDownDiagonal{true};
+   std::vector<bool> _isgoingThere;
 
 private:
     void createVAO(); //Cria VAO
@@ -108,7 +109,7 @@ private:
     void organizingData(); //Duplica vertices se necessário
     void computeTangents(); //Calcula tangentes e binormais para cada ponto
     void createFrameBuffer();
-    void createScreenQuad();
+    void createThings();
     void updateFrameBuffer();
     void setUniformArrays(QMatrix4x4 v);
     void updateLights();

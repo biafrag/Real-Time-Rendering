@@ -127,13 +127,13 @@ void main()
         vec3 V = normalize(-fragPos);
         float constant = 1;
         float linear = 0.0009;
-        float quadratic = 0.000032;
+        float quadratic = 0.0032;
 
         finalColor = vec3(0,0,0);
 
         vec3 ambient = material.ambient;//Componente da luz ambiente
         vec3 specular = vec3(0.0,0.0,0.0);
-        for(int i = 5; i < 10; i++)
+        for(int i = 0; i < 20; i++)
         {
             //Normalizando novamente a direção da luz
             vec3 L = normalize(lights[i].Position - fragPos);
@@ -163,7 +163,7 @@ void main()
                 specular = iSpec * material.specular * lights[i].Color;
             }
 
-            finalColor += specular;
+            finalColor += specular*attenuation;
 
         }
     }
@@ -182,7 +182,7 @@ void main()
     }
     else if (mode == 5)
     {
-        finalColor = (texture(gTangente,UV).rgb + vec3(1))/2;
+        finalColor = texture(gTangente,UV).rgb ;
     }
     else if(mode == 6)
     {

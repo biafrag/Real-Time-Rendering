@@ -22,7 +22,7 @@ RenderOpengl::RenderOpengl(QWidget* parent)
     cam.height = 701;
     this->setFocus();
 
-    createScreenQuad();
+    createThings();
 }
 
 RenderOpengl::~RenderOpengl()
@@ -405,8 +405,6 @@ void RenderOpengl::paintGL()
     //Ativar e linkar a textura de normal map
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _normalMap);
-    _programQuad->setUniformValue("normalSampler", 0);
-
     GLint blah = glGetUniformLocation(_programQuad->programId(), "normalSampler");
 
     glUniform1i(blah,0);
@@ -428,9 +426,6 @@ void RenderOpengl::paintGL()
    // glDrawBuffer(GL_BACK);
     glViewport(0, 0, cam.width, cam.height);
     glClear(GL_COLOR_BUFFER_BIT  | GL_DEPTH_BUFFER_BIT);
-
-    //model-view : Passa para espaço de projeção
-    _programGB->setUniformValue("mvp", mvp);
 
     //Ativar e linkar a textura de Z Buffer
     glActiveTexture(GL_TEXTURE0);
@@ -456,7 +451,7 @@ void RenderOpengl::paintGL()
     //Ativar e linkar a textura de tangente
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, _gTangente);
-    GLint gTangenteLocation = glGetUniformLocation(_programQuad->programId(), "gTangente");
+    unsigned int gTangenteLocation = glGetUniformLocation(_programQuad->programId(), "gTangente");
     glUniform1i(gTangenteLocation, 3);
 
     //Ativar e linkar a textura de textura mapeada
@@ -944,31 +939,31 @@ void RenderOpengl::updateLights()
         int i;
         for(i = 0; i < 5; i++)
         {
-            if( _isgoingRight)
+            if( _isgoingThere[i])
             {
-                _lights[i] += QVector3D(10,0,0);
+                _lights[i] += QVector3D(20,0,0);
                 if(_lights[i].x() > 100)
                 {
-                    _isgoingRight = false;
+                    _isgoingThere[i] = false;
                 }
             }
             else
             {
-                _lights[i] -= QVector3D(10,0,0);
+                _lights[i] -= QVector3D(20,0,0);
                 if(_lights[i].x() < -100)
                 {
-                    _isgoingRight = true;
+                    _isgoingThere[i] = true;
                 }
             }
         }
         for(; i < 10; i++)
         {
-            if( _isgoingDownDiagonal)
+            if( _isgoingThere[i])
             {
                 _lights[i] += QVector3D(10,-10,0);
                 if(_lights[i].x() > 100 || _lights[i].y() < -100)
                 {
-                    _isgoingDownDiagonal = false;
+                    _isgoingThere[i] = false;
                 }
             }
             else
@@ -976,45 +971,45 @@ void RenderOpengl::updateLights()
                 _lights[i] -= QVector3D(10,-10,0);
                 if(_lights[i].x() < -100 || _lights[i].y() > 100)
                 {
-                    _isgoingDownDiagonal = true;
+                    _isgoingThere[i] = true;
                 }
             }
         }
         for(; i < 15; i++)
         {
-            if( _isgoingUp)
+            if( _isgoingThere[i])
             {
-                _lights[i] += QVector3D(0,10,0);
-                if(_lights[i].y() > 190)
+                _lights[i] += QVector3D(0,20,0);
+                if(_lights[i].y() > 100)
                 {
-                    _isgoingUp = false;
+                    _isgoingThere[i] = false;
                 }
             }
             else
             {
-                _lights[i] -= QVector3D(0,10,0);
-                if(_lights[i].y() < -190)
+                _lights[i] -= QVector3D(0,20,0);
+                if(_lights[i].y() < -100)
                 {
-                    _isgoingUp = true;
+                    _isgoingThere[i] = true;
                 }
             }
         }
         for(; i < 20; i++)
         {
-            if( _isgoingUpDiagonal)
+            if( _isgoingThere[i])
             {
-                _lights[i] += QVector3D(10,10,0);
-                if(_lights[i].x() > 190 || _lights[i].y() > 190)
+                _lights[i] += QVector3D(20,20,0);
+                if(_lights[i].x() > 100 || _lights[i].y() > 100)
                 {
-                    _isgoingUpDiagonal = false;
+                    _isgoingThere[i] = false;
                 }
             }
             else
             {
-                _lights[i] -= QVector3D(10,10,0);
-                if(_lights[i].x() <  -190 || _lights[i].y() < -190)
+                _lights[i] -= QVector3D(20,20,0);
+                if(_lights[i].x() <  -100 || _lights[i].y() < -100)
                 {
-                    _isgoingUpDiagonal = true;
+                    _isgoingThere[i] = true;
                 }
             }
         }
@@ -1022,8 +1017,9 @@ void RenderOpengl::updateLights()
     time++;
 }
 
-void RenderOpengl::createScreenQuad()
+void RenderOpengl::createThings()
 {
+    //Criando pontos do quad da tela
    _pointsScreen = {
         QVector3D(1.0f, -1.0f, 0.0f),
          QVector3D(-1.0f, -1.0f, 0.0f),
@@ -1033,7 +1029,7 @@ void RenderOpengl::createScreenQuad()
          QVector3D(1.0f,  1.0f, 0.0f),
     };
 
-   //Create buffer of color of the lights
+   //Cria buffer com cor das luzes
    _colors = {
        QVector3D(0.5f, 0.0f, 0.0f),
        QVector3D(0.0f, 0.5f, 0.0f),
@@ -1057,6 +1053,7 @@ void RenderOpengl::createScreenQuad()
        QVector3D(0.0f,  1.0f, 0.75f),
   };
 
+   //Cria vetor com posições iniciais das luzes
    _lights = {
        QVector3D(0.f, 0.0f, 20.0f),
        QVector3D(0.f, -15.0f, 20.0f),
@@ -1084,5 +1081,7 @@ void RenderOpengl::createScreenQuad()
 
 
    };
+   std::vector<bool> v(20,true);
+   _isgoingThere = v;
 }
 

@@ -4,8 +4,6 @@ layout (location = 0) out vec3 gPosition;
 layout (location = 1) out vec3 gNormal;
 layout (location = 2) out vec3 gTangente;
 layout (location = 3) out vec3 gTex;
-//layout (location = 4) out vec3 gLight;
-//layout (location = 5) out vec3 gTanViewer;
 //out vec3 finalColor;
 //Variaveis de entrada
 in vec2 fragUV;
