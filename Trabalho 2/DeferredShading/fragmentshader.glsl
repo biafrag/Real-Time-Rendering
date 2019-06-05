@@ -15,11 +15,11 @@ in vec2 UV;
 out vec3 finalColor; // Cor final do objeto
 
 uniform sampler2D gTangente;
-uniform sampler2D gDepth;
-uniform sampler2D gPosition;
+//uniform sampler2D gDepth;
 uniform sampler2D gNormal;
+uniform sampler2D gPosition;
 uniform sampler2D gTex;
-uniform sampler2D normalSampler;
+//uniform sampler2D normalSampler;
 //uniform sampler2D gLight;
 //uniform sampler2D gTanViewer;
 uniform vec3 lightPos; // Posição da luz em coordenada do olho
@@ -37,7 +37,7 @@ float linearizeDepth(vec2 uv)
 {
     float zNear = 0.1;
     float zFar  = 1000.0;
-    float depth = texture2D(gDepth, uv).x;
+    float depth = 0;/*texture2D(gDepth, uv).x;*/
     return (2.0 * zNear) / (zFar + zNear - depth * (zFar - zNear));
 }
 
@@ -111,7 +111,16 @@ void main()
 
             finalColor += specular * attenuation;
         }
+//        vec3 fragTang = texture(gTangente,UV).rgb;
+//        finalColor = length(fragTang) == 0 ? vec3(1, 0, 0) : vec3(0, 1, 0);
 
+//        vec3 fragPos = texture(gPosition,UV).rgb;
+//        finalColor = fragPos;
+//        vec3 fragNormal = texture(gNormal,UV).rgb;
+//        finalColor = length(fragNormal) == 0 ? vec3(1, 0, 0) : vec3(0, 1, 0);
+
+//        vec3 fragTex = texture(gTex,UV).rgb;
+//        finalColor = fragTex;
 
 
     }
@@ -133,12 +142,12 @@ void main()
 
         vec3 ambient = material.ambient;//Componente da luz ambiente
         vec3 specular = vec3(0.0,0.0,0.0);
-        for(int i = 0; i < 20; i++)
+        for(int i = 0; i < 1; i++)
         {
             //Normalizando novamente a direção da luz
-            vec3 L = normalize(lights[i].Position - fragPos);
+            vec3 L = normalize(lightPos - fragPos);
 
-            float distance = length(lights[i].Position - fragPos);
+            float distance = length(lightPos - fragPos);
             float attenuation = 1.0/(constant + linear*distance + quadratic*(distance*distance));
            // float attenuation = 1;
             //Calcula produto interno entre luz e normal
@@ -173,7 +182,8 @@ void main()
     }
     else if (mode == 3)
     {
-        finalColor = normalize(texture(gNormal,UV).rgb);
+        vec3 fragNormal= texture(gNormal,UV).rgb ;
+        finalColor = length(fragNormal) == 0 ? vec3(1, 0, 0) : vec3(0, 1, 0);
     }
     else if (mode == 4)
     {
@@ -182,17 +192,20 @@ void main()
     }
     else if (mode == 5)
     {
-        finalColor = texture(gTangente,UV).rgb ;
+//        finalColor = texture(gTangente,UV).rgb ;
+        vec3 fragTang = texture(gTangente,UV).rgb ;
+        finalColor = length(fragTang) == 0 ? vec3(1, 0, 0) : vec3(0, 1, 0);
+
     }
     else if(mode == 6)
     {
         //Fazendo com bump
         vec3 fragPos = texture(gPosition, UV).rgb;
         vec3 fragNormal = normalize(texture(gNormal, UV).rgb);
-        vec3 fragTang = (texture(gTangente, UV).rgb);
+        vec3 fragTang = normalize(texture(gTangente, UV).rgb);
 
-        finalColor = (length(fragTang) == 0.0) ? vec3(1, 0, 0) : vec3(0, 1, 0);
-        return;
+        //finalColor = (length(fragTang) == 0.0) ? vec3(1, 0, 0) : vec3(0, 1, 0);
+        //return;
 
         //Calculo de espaço tangente
         //Bitangente no espaço do olho
