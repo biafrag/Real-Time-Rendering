@@ -4,9 +4,9 @@ layout (location = 0) out vec3 gPosition;
 layout (location = 1) out vec3 gNormal;
 layout (location = 2) out vec3 gTangente;
 layout (location = 3) out vec3 gTex;
-layout (location = 4) out vec3 gLight;
-layout (location = 5) out vec3 gTanViewer;
-out vec3 finalColor;
+//layout (location = 4) out vec3 gLight;
+//layout (location = 5) out vec3 gTanViewer;
+//out vec3 finalColor;
 //Variaveis de entrada
 in vec2 fragUV;
 in vec3 fragPos;
@@ -22,10 +22,11 @@ void main()
 
    gNormal = normalize(fragNormal);
 
-   gTangente = normalize(fragTang);
+   gTangente = fragTang;
+   //gTangente = length(gTangente) == 0 ? vec3(1, 0, 0) : vec3(0, 1, 0);
 
    gTex = normalize(texture(normalSampler,fragUV).rgb);
 
-   //finalColor = gTangente;
+   //finalColor = length(gTangente) == 0 ? vec3(1, 0, 0) : vec3(0, 1, 0);
 
 }

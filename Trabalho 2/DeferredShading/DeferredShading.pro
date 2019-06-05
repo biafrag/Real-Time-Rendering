@@ -31,7 +31,8 @@ SOURCES += \
 HEADERS += \
         mainwindow.h \
     renderopengl.h \
-    reader.h
+    reader.h \
+    reader2.h
 
 FORMS += \
         mainwindow.ui

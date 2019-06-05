@@ -1,8 +1,8 @@
 #include "renderopengl.h"
 #include <QImage>
 #include<QGLWidget>
-#include "reader.h"
-//#include "reader2.h"
+//#include "reader.h"
+#include "reader2.h"
 #include "math.h"
 #include <glm/ext.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -49,12 +49,14 @@ void RenderOpengl::setFile(std::string fileName)
         _indexPoints.clear();
         _indexNormals.clear();
         _indexTex.clear();
-        readFile(fileName,_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
-        quadToTriangleMesh(indexPointsQuad, indexPointsTriangle,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
-        organizingData();
+//        readFile(fileName,_points,_normals,_texCoords,indexPointsTriangle,indexPointsQuad,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
+//        quadToTriangleMesh(indexPointsQuad, indexPointsTriangle,indexNormalsTriangle,indexTexTriangle,indexNormalsQuads,indexTexQuads);
+//        organizingData();
         //createSphere();
-        computeTangents();
+  //      computeTangents();
         //printThings();
+
+        readFile("../bolinha/bolinha.obj",_points, _normals,_tangents, _texCoords, _indexPoints);
 }
 
 void RenderOpengl::setMode(int mode)
@@ -368,7 +370,7 @@ void RenderOpengl::paintGL()
     _programGB->bind();
     _vao.bind();
     glBindFramebuffer(GL_FRAMEBUFFER, _gBuffer);
-    glViewport(0,0,cam.width,cam.height);
+    glViewport(0, 0, cam.width, cam.height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     //Definindo matriz view e projection
@@ -398,7 +400,7 @@ void RenderOpengl::paintGL()
 //    //inversa transposta da model-view
     _programGB->setUniformValue("normalMatrix", mv.inverted().transposed());
     //Variáveis de material e luz
-    _programGB->setUniformValue("lightPos", v * cam.eye/*v*QVector3D(5,5,-5)*/);
+    _programGB->setUniformValue("lightPos", v * QVector3D(0,0,20)/*v*QVector3D(5,5,-5)*/);
 
     //Ativar e linkar a textura de normal map
     glActiveTexture(GL_TEXTURE0);
@@ -410,13 +412,21 @@ void RenderOpengl::paintGL()
     glUniform1i(blah,0);
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexPoints.size()), GL_UNSIGNED_INT, nullptr);
 
+//    glBindFramebuffer(GL_FRAMEBUFFER, _gBuffer);
+//    glReadBuffer(GL_COLOR_ATTACHMENT2);
+//    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+//    glBlitFramebuffer(0, 0, cam.width, cam.height,
+//                      0, 0, cam.width, cam.height,
+//                      GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+//    return;
     //SEGUNDA PASSADA
     //Dando bind no programa e no vao
     _programQuad->bind();
     _vao2.bind();
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
    // glDrawBuffer(GL_BACK);
-    glViewport(0,0,cam.width,cam.height);
+    glViewport(0, 0, cam.width, cam.height);
     glClear(GL_COLOR_BUFFER_BIT  | GL_DEPTH_BUFFER_BIT);
 
     //model-view : Passa para espaço de projeção
@@ -427,7 +437,7 @@ void RenderOpengl::paintGL()
     glBindTexture(GL_TEXTURE_2D, _gDepth);
     GLint gDepthLocation = glGetUniformLocation(_programQuad->programId(), "gDepth");
 
-    glUniform1i(gDepthLocation,  0);
+    glUniform1i(gDepthLocation, 0);
 
     //Ativar e linkar a textura de posição
     glActiveTexture(GL_TEXTURE1);
@@ -447,34 +457,27 @@ void RenderOpengl::paintGL()
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, _gTangente);
     GLint gTangenteLocation = glGetUniformLocation(_programQuad->programId(), "gTangente");
-    glUniform1i(gTangenteLocation,  3);
+    glUniform1i(gTangenteLocation, 3);
 
     //Ativar e linkar a textura de textura mapeada
     glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, _gTex);
     GLint gTexLocation = glGetUniformLocation(_programQuad->programId(), "gTex");
-    glUniform1i(gTexLocation,  4);
-
-    //Ativar e linkar a textura de normal map
-    glActiveTexture(GL_TEXTURE5);
-    glBindTexture(GL_TEXTURE_2D, _normalMap);
-    GLint normalMapLocation = glGetUniformLocation(_programQuad->programId(), "normalSampler");
-
-    glUniform1i(normalMapLocation, 5);
+    glUniform1i(gTexLocation, 4);
 
     //Ativar e linkar a textura de luz
-    glActiveTexture(GL_TEXTURE6);
-    glBindTexture(GL_TEXTURE_2D, _gLight);
-    GLint gLightLocation = glGetUniformLocation(_programQuad->programId(), "gLight");
+//    glActiveTexture(GL_TEXTURE6);
+//    glBindTexture(GL_TEXTURE_2D, _gLight);
+//    GLint gLightLocation = glGetUniformLocation(_programQuad->programId(), "gLight");
 
-    glUniform1i(gLightLocation, 6);
+//    glUniform1i(gLightLocation, 6);
 
     //Ativar e linkar a textura de observador
-    glActiveTexture(GL_TEXTURE7);
-    glBindTexture(GL_TEXTURE_2D, _gTanViewer);
-    GLint gViewerLocation = glGetUniformLocation(_programQuad->programId(), "gTanViewer");
+//    glActiveTexture(GL_TEXTURE7);
+//    glBindTexture(GL_TEXTURE_2D, _gTanViewer);
+//    GLint gViewerLocation = glGetUniformLocation(_programQuad->programId(), "gTanViewer");
 
-    glUniform1i(gViewerLocation, 7);
+//    glUniform1i(gViewerLocation, 7);
 
     //Bola
     _programQuad->setUniformValue("material.ambient", QVector3D(0.2f,0.2f,0.2f));
@@ -486,12 +489,34 @@ void RenderOpengl::paintGL()
 
     setUniformArrays(v);
     //Variáveis de material e luz
-   _programQuad->setUniformValue("lightPos", v*cam.eye/*QVector3D(0,0,300)*/);
+   _programQuad->setUniformValue("lightPos", v*QVector3D(0,0,20)/*QVector3D(0,0,300)*/);
 
    _programQuad->setUniformValue("mode",_mode);
    //printf("COORDS: %f %f %f\n",(v * cam.eye).x(),(v * cam.eye).y(),(v * cam.eye).z());
     //Desenhando os triângulos que formam o cubo
     glDrawArrays(GL_TRIANGLES, 0, (int)_pointsScreen.size());
+
+    if(time > 15)
+    {
+        time = 0;
+        if( _isgoingRight)
+        {
+            _lights[0] += QVector3D(20,0,0);
+            if(_lights[0].x() > 100)
+            {
+                _isgoingRight = false;
+            }
+        }
+        else
+        {
+            _lights[0] -= QVector3D(20,0,0);
+            if(_lights[0].x() < -100)
+            {
+                _isgoingRight = true;
+            }
+        }
+    }
+    time++;
     update();
 }
 
@@ -529,8 +554,8 @@ void RenderOpengl::createVAO()
     glGenBuffers(1, &_texCoordsBuffer);
     glBindBuffer(GL_ARRAY_BUFFER,_texCoordsBuffer);
     glBufferData(GL_ARRAY_BUFFER, _texCoords.size()*sizeof(QVector2D), &_texCoords[0], GL_STATIC_DRAW);
-    glVertexAttribPointer(4, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glEnableVertexAttribArray(4);
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glEnableVertexAttribArray(3);
 
     //Criando buffers de indexPoints
     glGenBuffers(1, &_meshBuffer);
@@ -752,101 +777,6 @@ void RenderOpengl::computeTangents()
             _tangents[i] = QVector3D(t.x(), t.y(), t.z());
         }
 
-        //Outra Abordagem do slide
-//    std::vector<QVector3D> auxTang;
-//        for(int i = 0; i<_indexPoints.size()/3;i++)
-//        {
-//            int id0 = _indexPoints[3*i];
-//            int id1 = _indexPoints[3*i + 1];
-//            int id2 = _indexPoints[3*i + 2];
-//            QVector3D Gx = QVector3D(_points[id1].x(),_texCoords[id1].y(),_texCoords[id1].y());
-//            QVector3D Hx = QVector3D(_points[id0].x(),_texCoords[id0].x(),_texCoords[id0].y());
-//            QVector3D Rx = QVector3D(_points[id2].x(),_texCoords[id2].x(),_texCoords[id2].y());
-
-//            QVector3D axbxcx = QVector3D::crossProduct((Gx - Hx),(Rx-Hx));
-//            //float dx = QVector3D::dotProduct(-axbxcx,H);
-
-//            float ax = axbxcx.x();
-//            float bx = axbxcx.y();
-//            float cx = axbxcx.z();
-
-//            float tx = -bx/ax;
-
-//            QVector3D Gy = QVector3D(_points[id1].y(),_texCoords[id1].x(),_texCoords[id1].y());
-//            QVector3D Hy = QVector3D(_points[id0].y(),_texCoords[id0].x(),_texCoords[id0].y());
-//            QVector3D Ry = QVector3D(_points[id2].y(),_texCoords[id2].x(),_texCoords[id2].y());
-
-//            QVector3D aybycy = QVector3D::crossProduct((Gy - Hy),(Ry-Hy));
-//            //float dx = QVector3D::dotProduct(-axbxcx,H);
-
-//            float ay = aybycy.x();
-//            float by = aybycy.y();
-//            float cy = aybycy.z();
-
-//            float ty = -by/ay;
-
-//            QVector3D Gz = QVector3D(_points[id1].z(),_texCoords[id1].x(),_texCoords[id1].y());
-//            QVector3D Hz = QVector3D(_points[id0].z(),_texCoords[id0].x(),_texCoords[id0].y());
-//            QVector3D Rz = QVector3D(_points[id2].z(),_texCoords[id2].x(),_texCoords[id2].y());
-
-//            QVector3D azbzcz = QVector3D::crossProduct((Gz - Hz),(Rz-Hz));
-//            //float dx = QVector3D::dotProduct(-axbxcx,H);
-
-//            float az = azbzcz.x();
-//            float bz = azbzcz.y();
-//            float cz = azbzcz.z();
-
-//            float tz = -bz/az;
-
-//            _tangents.push_back(QVector3D(tx,ty,tz));
-//            _tangents.push_back(QVector3D(tx,ty,tz));
-//            _tangents.push_back(QVector3D(tx,ty,tz));
-//        }
-
-      //Outra abordagem
-//    for ( int i=0; i<_indexPoints.size()/3; i++)
-//    {
-
-//            int id0 = _indexPoints[3*i];
-//            int id1 = _indexPoints[3*i + 1];
-//            int id2 = _indexPoints[3*i + 2];
-
-//            int idv0 = _indexTex[3*i];
-//            int idv1 = _indexTex[3*i + 1];
-//            int idv2 = _indexTex[3*i + 2];
-
-//            // Shortcuts for vertices
-//            QVector3D v0 = _points[id0];
-//            QVector3D v1 = _points[id1];
-//            QVector3D v2 = _points[id2];
-
-//            // Shortcuts for UVs
-//            QVector2D uv0 = _texCoords[id0];
-//            QVector2D uv1 = _texCoords[id1];
-//            QVector2D uv2 = _texCoords[id2];
-
-//            // Edges of the triangle : position delta
-//            QVector3D deltaPos1 = v1-v0;
-//            QVector3D deltaPos2 = v2-v0;
-
-//            // UV delta
-//            QVector2D deltaUV1 = uv1-uv0;
-//            QVector2D deltaUV2 = uv2-uv0;
-//    //We can now use our formula to compute the tangent and the bitangent :
-
-//            float r = 1.0f / (deltaUV1.x() * deltaUV2.y() - deltaUV1.y() * deltaUV2.x());
-//            QVector3D tangent = (deltaPos1 * deltaUV2.y()   - deltaPos2 * deltaUV1.y())*r;
-//            QVector3D bitangent = (deltaPos2 * deltaUV1.x()   - deltaPos1 * deltaUV2.x())*r;
-//   // Finally, we fill the *tangents *and *bitangents *buffers. Remember, these buffers are not indexed yet, so each vertex has its own copy.
-
-//            // Set the same tangent for all three vertices of the triangle.
-//            // They will be merged later, in vboindexer.cpp
-//            _tangents.push_back(tangent);
-//            _tangents.push_back(tangent);
-//            _tangents.push_back(tangent);
-
-//    }
-
 }
 
 void RenderOpengl::createFrameBuffer()
@@ -869,8 +799,6 @@ void RenderOpengl::createFrameBuffer()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, _gNormal, 0);
-
-
     //Texturas adicionais para bump
 
     //Buffer de Tangente
@@ -890,28 +818,26 @@ void RenderOpengl::createFrameBuffer()
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, _gTex, 0);
 
     //Buffer de luz no espaço tangente
-    glGenTextures(1, &_gLight);
-    glBindTexture(GL_TEXTURE_2D, _gLight);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, _gLight, 0);
+//    glGenTextures(1, &_gLight);
+//    glBindTexture(GL_TEXTURE_2D, _gLight);
+//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, _gLight, 0);
 
-    //Buffer de observador no espaço tangente
-    glGenTextures(1, &_gTanViewer);
-    glBindTexture(GL_TEXTURE_2D, _gTanViewer);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, _gTanViewer, 0);
+//    //Buffer de observador no espaço tangente
+//    glGenTextures(1, &_gTanViewer);
+//    glBindTexture(GL_TEXTURE_2D, _gTanViewer);
+//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT5, GL_TEXTURE_2D, _gTanViewer, 0);
 
-    unsigned int attachments[6] = { GL_COLOR_ATTACHMENT0,
+    unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0,
                                     GL_COLOR_ATTACHMENT1,
                                     GL_COLOR_ATTACHMENT2,
-                                    GL_COLOR_ATTACHMENT3,
-                                    GL_COLOR_ATTACHMENT4,
-                                    GL_COLOR_ATTACHMENT5};
-    glDrawBuffers(6,attachments);
+                                    GL_COLOR_ATTACHMENT3};
+    glDrawBuffers(4, attachments);
 
     //Buffer de profundidade
     glGenTextures(1, &_gDepth);
@@ -929,52 +855,42 @@ void RenderOpengl::createFrameBuffer()
     }
 }
 
+
+
 void RenderOpengl::updateFrameBuffer()
 {
-   glBindFramebuffer(GL_FRAMEBUFFER, _gBuffer);
+    glBindFramebuffer(GL_FRAMEBUFFER, _gBuffer);
 
-   // - Buffer de Posição
-   glBindTexture(GL_TEXTURE_2D, _gPosition);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+    glBindTexture(GL_TEXTURE_2D, _gPosition);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
 
-   glBindTexture(GL_TEXTURE_2D, _gNormal);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
+    glBindTexture(GL_TEXTURE_2D, _gNormal);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
 
+    //Buffer de Tangente
+    glBindTexture(GL_TEXTURE_2D, _gTangente);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
 
-   //Texturas adicionais para bump
+    //Buffer de coordenadas de textura do bump
+    glBindTexture(GL_TEXTURE_2D, _gTex);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
 
-   //Buffer de Tangente
-   glBindTexture(GL_TEXTURE_2D, _gTangente);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
-
-   //Buffer de coordenadas de textura do bump
-   glBindTexture(GL_TEXTURE_2D, _gTex);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
-
-   //Buffer de luz no espaço tangente
-   glBindTexture(GL_TEXTURE_2D, _gLight);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
-
-
-   //Buffer de observador no espaço tangente
-   glBindTexture(GL_TEXTURE_2D, _gTanViewer);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
-
-   //Buffer de profundidade
+    //Buffer de profundidade
     glBindTexture(GL_TEXTURE_2D, _gDepth);
-   glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, cam.width, cam.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
-                 0);
-
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, cam.width, cam.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
+                  0);
 }
+
+
 
 void RenderOpengl::setUniformArrays(QMatrix4x4 v)
 {
     //Colocando luzes
-    QVector3D pos(100,100,20);
-    pos = v*pos;
+    QVector3D pos(30,30,20);
+    pos = v*_lights[0];
     _programQuad->setUniformValue("lights[0].Position", pos);
     _programQuad->setUniformValue("lights[0].Color", QVector3D(0,0,1));
-    pos =  QVector3D(100,0,20);
+    pos =  QVector3D(30,30,20);
     pos = v*pos;
     _programQuad->setUniformValue("lights[1].Position",pos );
     _programQuad->setUniformValue("lights[1].Color", _colors[0]);
@@ -1077,4 +993,8 @@ void RenderOpengl::createScreenQuad()
        QVector3D(0.25f, 0.25f, 0.0f),
        QVector3D(0.0f,  1.0f, 0.75f),
   };
+
+   _lights = {
+       QVector3D(30.f, 0.0f, 20.0f)
+   };
 }

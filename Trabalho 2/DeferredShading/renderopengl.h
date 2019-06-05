@@ -49,7 +49,7 @@ private:
     std::vector<QVector3D> _bitangents; // vetor de tangentes para cada vértice
 
     std::vector<QVector3D> _pointsScreen; //Vetor de cada ponto do meu objeto que será renderizado
-    QVector3D _lights[20];
+    std::vector<QVector3D> _lights;
 
    unsigned int _pointsBuffer = static_cast<unsigned int>(-1);
    unsigned int _normalsBuffer = static_cast<unsigned int>(-1);
@@ -92,6 +92,8 @@ private:
    QOpenGLVertexArrayObject _vao2;
    unsigned int _textureID;
    unsigned int _normalMap;
+   int time{0};
+   bool _isgoingRight{true};
 
 private:
     void createVAO(); //Cria VAO
@@ -105,7 +107,7 @@ private:
     void createFrameBuffer();
     void createScreenQuad();
     void updateFrameBuffer();
-    void setUniformArrays(QMatrix4x4 mv);
+    void setUniformArrays(QMatrix4x4 v);
 
     //Arcball
     bool mousepress;

@@ -1,4 +1,4 @@
-#version 410 core
+#version 330 core
 
 layout (location = 5) in vec3 vPos;
 out vec2 UV;

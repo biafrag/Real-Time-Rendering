@@ -1,4 +1,4 @@
-#version 410 core
+#version 330 core
 
 struct Material //Propriedades do material
 {
@@ -14,14 +14,14 @@ uniform Material material;
 in vec2 UV;
 out vec3 finalColor; // Cor final do objeto
 
+uniform sampler2D gTangente;
 uniform sampler2D gDepth;
 uniform sampler2D gPosition;
 uniform sampler2D gNormal;
-uniform sampler2D gTangente;
 uniform sampler2D gTex;
 uniform sampler2D normalSampler;
-uniform sampler2D gLight;
-uniform sampler2D gTanViewer;
+//uniform sampler2D gLight;
+//uniform sampler2D gTanViewer;
 uniform vec3 lightPos; // Posição da luz em coordenada do olho
 
 
@@ -51,20 +51,16 @@ void main()
     if(mode == 0)
     {
         //Fazendo com bump
-        vec3 fragPos = normalize(texture(gPosition,UV).rgb);
+        vec3 fragPos = texture(gPosition,UV).rgb;
         vec3 fragNormal = normalize(texture(gNormal,UV).rgb);
         vec3 fragTang = texture(gTangente,UV).rgb;
 
         //Calculo de espaço tangente
         //Bitangente no espaço do olho
-        vec3 bitangentVertexEye= cross(fragNormal,fragTang);
+        vec3 bitangentVertexEye = (cross(fragNormal,fragTang));
 
         //Matriz de rotação tbn para transformar luz para o eapaço tangente
         mat3 rotation = transpose(mat3(fragTang,bitangentVertexEye,fragNormal));
-
-
-        //Colocando luz no espaco tangente
-        vec3 tanLight = rotation*normalize(lightPos - fragPos);
 
         //Viewer no espaco tangente
         vec3 tanViewer = rotation*(-fragPos);
@@ -73,34 +69,10 @@ void main()
         vec3 specular = vec3(0.0,0.0,0.0);
 
         //Normal usada eh a de textura de mapa de normal
-        vec3 N = fragNormal; /*normalize(expand(texture(gTex,UV).rgb))*/;
-
-        //Normalizando novamente a luz no espaço tangente
-        vec3 L = tanLight;
+        vec3 N = normalize(expand(texture(gTex,UV).rgb));
 
         //Viewer
-        vec3 V = tanViewer;
-
-        //Calcula produto interno entre luz e normal no espaco tangente
-        float iDif = dot(tanLight,N);
-
-        //Calcula componente difusa da luz
-        vec3 diffuse = max(0,iDif) * material.diffuse;
-
-        //finalColor = ambient + diffuse;
-
-        //Se certifica que a luz e a normal nao sao perpendiculares
-        if( iDif > 0 )
-        {
-
-            //HalfVector
-            vec3 H = normalize(L + V);
-
-            float iSpec = pow(max(dot(N,H),0.0),material.shininess);
-
-            //Calcula componente especular
-            specular = iSpec * material.specular;
-        }
+        vec3 V = normalize(tanViewer);
 
        // finalColor += specular;
 
@@ -108,35 +80,36 @@ void main()
         float linear = 2;
         float quadratic = 0.032;
         finalColor = vec3(0,0,0);
-        for(int i = 0; i < 3; i++)
+        for(int i = 0; i < 1; i++)
         {
-            //Normalizando novamente a luz no espaço tangente
-            vec3 L = normalize(lights[i].Position - fragPos);
+            //Colocando luz no espaco tangente
+            vec3 tanLight = rotation*normalize(lights[i].Position - fragPos);
 
-            float distance = length(L);
-            float attenuation = 1.0/(constant + linear*distance + quadratic*(distance*distance));
+
+            //Normalizando novamente a luz no espaço tangente
+            vec3 L = normalize(tanLight);
+
+           // float distance = length(lights[i].Position - fragPos);
+            float attenuation = 1.0;///(constant + linear*distance + quadratic*(distance*distance));
 
             //Calcula produto interno entre luz e normal no espaco tangente
             float iDif = dot(L,N);
 
             //Calcula componente difusa da luz
-            vec3 diffuse = max(0,iDif) * material.diffuse /** lights[i].Color*/;
+            vec3 diffuse = max(0,iDif) * material.diffuse * lights[i].Color;
 
-            finalColor += (ambient*attenuation * lights[i].Color + diffuse*attenuation );
+            finalColor += attenuation * (ambient * lights[i].Color + diffuse );
 
-            //Se certifica que a luz e a normal nao sao perpendiculares
-            if( iDif > 0 )
-            {
-                //HalfVector
-                vec3 H = normalize(L + V);
+            //HalfVector
+            vec3 H = normalize(L + V);
+            vec3 r = normalize(reflect(-L, N));
 
-                float iSpec = pow(max(dot(N,H),0.0),material.shininess);
+            float iSpec = abs(pow(max(dot(V, r), 0.0), material.shininess));
 
-                //Calcula componente especular
-                specular = iSpec * material.specular * lights[i].Color;
-            }
+            //Calcula componente especular
+            specular = iSpec * material.specular * lights[i].Color;
 
-            finalColor += specular*attenuation;
+            finalColor += specular * attenuation;
         }
 
 
@@ -156,9 +129,9 @@ void main()
         vec3 N = normalize(fragNormal) /*normalize(expand(texture(normalsampler,fragUV).rgb))*/;
         //Viewer
         vec3 V = normalize(-fragPos)/*tanViewer*/;
-        float constant = 1.0;
-        float linear = 0.09;
-        float quadratic = 0.032;;
+        float constant = 1;
+        float linear = 0.0009;
+        float quadratic = 0.00032;;
 
         finalColor = vec3(0,0,0);
 
@@ -168,7 +141,7 @@ void main()
             vec3 L = normalize(lights[i].Position - fragPos);
 
             float distance = length(lights[i].Position - fragPos);
-            float attenuation = 1.0;//(constant + linear*distance + quadratic*(distance*distance));
+            float attenuation = 1.0;///(constant + linear*distance + quadratic*(distance*distance));
 
             //Calcula produto interno entre luz e normal no espaco tangente
             float iDif = dot(L,N);
@@ -182,7 +155,7 @@ void main()
             if( iDif > 0 )
             {
                 //HalfVector
-                vec3 r = reflect(-L, N);
+                vec3 r = normalize(reflect(-L, N));
 
                 float iSpec = pow(max(dot(V,r),0.0),material.shininess);
 
@@ -200,38 +173,39 @@ void main()
     }
     else if (mode == 3)
     {
-        finalColor = texture(gNormal,UV).rgb;
+        finalColor = normalize(texture(gNormal,UV).rgb);
     }
     else if (mode == 4)
     {
-        float d;
-        d = linearizeDepth(UV);
-        finalColor = vec3(d,d,d);
+        float d = linearizeDepth(UV);
+        finalColor = vec3(d);
     }
     else if (mode == 5)
     {
-        finalColor = texture(gTangente,UV).rgb;
+        finalColor = (texture(gTangente,UV).rgb + vec3(1))/2;
     }
     else if(mode == 6)
     {
         //Fazendo com bump
-        vec3 fragPos = normalize(texture(gPosition,UV).rgb);
-        vec3 fragNormal = normalize(texture(gNormal,UV).rgb);
-        vec3 fragTang = texture(gTangente,UV).rgb;
+        vec3 fragPos = texture(gPosition, UV).rgb;
+        vec3 fragNormal = normalize(texture(gNormal, UV).rgb);
+        vec3 fragTang = (texture(gTangente, UV).rgb);
+
+        finalColor = (length(fragTang) == 0.0) ? vec3(1, 0, 0) : vec3(0, 1, 0);
+        return;
 
         //Calculo de espaço tangente
         //Bitangente no espaço do olho
-        vec3 bitangentVertexEye= cross(fragNormal,fragTang);
+        vec3 bitangentVertexEye = cross(fragNormal,fragTang);
 
         //Matriz de rotação tbn para transformar luz para o eapaço tangente
         mat3 rotation = transpose(mat3(fragTang,bitangentVertexEye,fragNormal));
-
 
         //Colocando luz no espaco tangente
         vec3 tanLight = rotation*normalize(lightPos - fragPos);
 
         //Viewer no espaco tangente
-        vec3 tanViewer = rotation*(-fragPos);
+        vec3 tanViewer = normalize(rotation*(-fragPos));
 
         vec3 ambient = material.ambient;//Componente da luz ambiente
         vec3 specular = vec3(0.0,0.0,0.0);
@@ -250,9 +224,6 @@ void main()
 
         finalColor = ambient + diffuse;
 
-        //finalColor = fragTang;//texture(gTangente,UV).rgb;
-       // finalColor = bitangentVertexEye;//texture(bitangentVertexEye, UV).rgb;
-
         //Se certifica que a luz e a normal nao sao perpendiculares
         if( iDif > 0 )
         {
@@ -262,14 +233,14 @@ void main()
             //HalfVector
             vec3 H = normalize(L + V);
 
-            float iSpec = pow(max(dot(N,H),0.0),material.shininess);
+            vec3 r = normalize(reflect(-L, N));
+
+            float iSpec = abs(pow(max(dot(V,r),0.0),material.shininess));
 
             //Calcula componente especular
             specular = iSpec * material.specular;
         }
 
         finalColor += specular;
-
     }
-
 }
