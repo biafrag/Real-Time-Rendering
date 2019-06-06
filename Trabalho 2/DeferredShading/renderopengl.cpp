@@ -495,7 +495,7 @@ void RenderOpengl::paintGL()
 
     setUniformArrays(v);
     //Variáveis de material e luz
-   _programQuad->setUniformValue("lightPos", v * QVector3D(8,0,8)/*QVector3D(0,0,300)*/);
+   _programQuad->setUniformValue("lightPos", v * QVector3D(0,0,8)/*QVector3D(0,0,300)*/);
 
    _programQuad->setUniformValue("mode",_mode);
    //printf("COORDS: %f %f %f\n",(v * cam.eye).x(),(v * cam.eye).y(),(v * cam.eye).z());
@@ -939,7 +939,7 @@ void RenderOpengl::setUniformArrays(QMatrix4x4 v)
 void RenderOpengl::updateLights()
 {
 
-    if(time > 15)
+    if(time > 5)
     {
         time = 0;
         int i;

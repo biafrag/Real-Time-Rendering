@@ -182,8 +182,8 @@ void main()
     }
     else if (mode == 3)
     {
-        vec3 fragNormal= texture(gNormal,UV).rgb ;
-        finalColor = length(fragNormal) == 0 ? vec3(1, 0, 0) : vec3(0, 1, 0);
+        /*vec3 fragNormal*/finalColor = texture(gNormal,UV).rgb ;
+       // finalColor = length(fragNormal) == 0 ? vec3(1, 0, 0) : vec3(0, 1, 0);
     }
     else if (mode == 4)
     {
@@ -215,13 +215,12 @@ void main()
         mat3 rotation = transpose(mat3(fragTang,bitangentVertexEye,fragNormal));
 
         //Colocando luz no espaco tangente
-        vec3 tanLight = rotation*normalize(lightPos - fragPos);
+        vec3 tanLight = rotation * normalize(lightPos - fragPos);
 
         //Viewer no espaco tangente
-        vec3 tanViewer = normalize(rotation*(-fragPos));
+        vec3 tanViewer = normalize(rotation * (-fragPos));
 
         vec3 ambient = material.ambient;//Componente da luz ambiente
-        vec3 specular = vec3(0.0,0.0,0.0);
 
         //Normal usada eh a de textura de mapa de normal
         vec3 N = normalize(expand(texture(gTex,UV).rgb));
@@ -237,23 +236,16 @@ void main()
 
         finalColor = ambient + diffuse;
 
+        vec3 specular = vec3(0.0,0.0,0.0);
         //Se certifica que a luz e a normal nao sao perpendiculares
-        if( iDif > 0 )
-        {
-            //Viewer
-            vec3 V = tanViewer;
 
-            //HalfVector
-            vec3 H = normalize(L + V);
+        vec3 V = tanViewer;
+        vec3 r = normalize(reflect(-L, N));
 
-            vec3 r = normalize(reflect(-L, N));
+        float iSpec = pow(max(dot(V,r),0.0),material.shininess);
 
-            float iSpec = abs(pow(max(dot(V,r),0.0),material.shininess));
-
-            //Calcula componente especular
-            specular = iSpec * material.specular;
-        }
-
+        //Calcula componente especular
+        specular = iSpec * material.specular;
         finalColor += specular;
     }
 }
