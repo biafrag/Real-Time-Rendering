@@ -21,32 +21,27 @@ void MainWindow::on_radioButton_Result_clicked()
     ui->openGLWidget->setMode(0);
 }
 
-void MainWindow::on_radioButton_Phong_clicked()
+void MainWindow::on_radioButton_PositionBuffer_clicked()
 {
     ui->openGLWidget->setMode(1);
 }
 
-void MainWindow::on_radioButton_PositionBuffer_clicked()
-{
-    ui->openGLWidget->setMode(2);
-}
-
 void MainWindow::on_radioButton_NormalBuffer_clicked()
 {
-     ui->openGLWidget->setMode(3);
+     ui->openGLWidget->setMode(2);
 }
 
 void MainWindow::on_radioButton_ZBuffer_clicked()
 {
-    ui->openGLWidget->setMode(4);
+    ui->openGLWidget->setMode(3);
 }
 
 void MainWindow::on_radioButton_TengentBuffer_clicked()
 {
-    ui->openGLWidget->setMode(5);
+    ui->openGLWidget->setMode(4);
 }
 
 void MainWindow::on_radioButton_Bump_clicked()
 {
-    ui->openGLWidget->setMode(6);
+    ui->openGLWidget->setMode(5);
 }

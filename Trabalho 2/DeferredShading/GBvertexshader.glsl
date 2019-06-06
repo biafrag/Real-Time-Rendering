@@ -13,12 +13,10 @@ uniform mat4 normalMatrix; //Inversa transposta da MV
 uniform vec3 lightPos; // Posição da luz em coordenada do olho
 
 //Variáveis out
-out vec3 fragNormal;
-out vec3 fragPos;
-out vec3 fragTang;
-out vec2 fragUV;
-out vec3 lightTang;
-out vec3 tanViewer;
+out vec3 fragNormal; //Normal no espaço do olho
+out vec3 fragPos; //Posição no espaço do olho
+out vec3 fragTang; //Tangente no espaço do olho
+out vec2 fragUV; // Coordenada de textura
 
 void main()
 {
@@ -31,10 +29,9 @@ void main()
     //Posição da normal no espaço do olho
     fragNormal = normalize(( normalMatrix * vec4( vertexNormal, 0 ) ).xyz);
 
-    //Parte do bump
     //Posição da tangente no espaço do olho
     fragTang = normalize(( normalMatrix * vec4( tangent, 0 ) ).xyz);
-    //fragTang = tangent;
 
+    //Coordenadas de textura
     fragUV = vertexTexCoord;
 }

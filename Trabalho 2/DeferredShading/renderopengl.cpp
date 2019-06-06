@@ -16,7 +16,7 @@ RenderOpengl::RenderOpengl(QWidget* parent)
     cam.eye =  QVector3D(0.0f,0.f,6.f);
     cam.up = QVector3D(0.f,2.f,0.f);
     cam.zNear = 0.1f;
-    cam.zFar  = 1000.f;
+    cam.zFar  = 100.f;
     cam.fovy  = 60.f;
     cam.width = 1002;
     cam.height = 701;
@@ -399,15 +399,13 @@ void RenderOpengl::paintGL()
     _programGB->setUniformValue("mvp", mvp);
 //    //inversa transposta da model-view
     _programGB->setUniformValue("normalMatrix", mv.inverted().transposed());
-    //Variáveis de material e luz
-    _programGB->setUniformValue("lightPos", v * QVector3D(0,0,8)/*v*QVector3D(5,5,-5)*/);
 
     //Ativar e linkar a textura de normal map
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, _normalMap);
-    GLint blah = glGetUniformLocation(_programQuad->programId(), "normalSampler");
+    GLint normalMap = glGetUniformLocation(_programQuad->programId(), "normalSampler");
 
-    glUniform1i(blah,0);
+    glUniform1i(normalMap,0);
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexPoints.size()), GL_UNSIGNED_INT, nullptr);
 
 //    glBindFramebuffer(GL_FRAMEBUFFER, _gBuffer);
@@ -427,38 +425,6 @@ void RenderOpengl::paintGL()
     glViewport(0, 0, cam.width, cam.height);
     glClear(GL_COLOR_BUFFER_BIT  | GL_DEPTH_BUFFER_BIT);
 
-//    //Ativar e linkar a textura de Z Buffer
-//    glActiveTexture(GL_TEXTURE0);
-//    glBindTexture(GL_TEXTURE_2D, _gDepth);
-//    GLint gDepthLocation = glGetUniformLocation(_programQuad->programId(), "gDepth");
-
-//    glUniform1i(gDepthLocation, 0);
-
-//    //Ativar e linkar a textura de posição
-//    glActiveTexture(GL_TEXTURE1);
-//    glBindTexture(GL_TEXTURE_2D, _gPosition);
-//    GLint gPositionLocation = glGetUniformLocation(_programQuad->programId(), "gPosition");
-//    glUniform1i(gPositionLocation,  1);
-
-//    //Ativar e linkar a textura de normal
-//    glActiveTexture(GL_TEXTURE2);
-//    glBindTexture(GL_TEXTURE_2D, _gNormal);
-//    GLint gNormalLocation = glGetUniformLocation(_programQuad->programId(), "gNormal");
-//    glUniform1i(gNormalLocation,  2);
-
-//    //Texturas adicionais para bump
-
-//    //Ativar e linkar a textura de tangente
-//    glActiveTexture(GL_TEXTURE3);
-//    glBindTexture(GL_TEXTURE_2D, _gTangente);
-//    unsigned int gTangenteLocation = glGetUniformLocation(_programQuad->programId(), "gTangente");
-//    glUniform1i(gTangenteLocation, 3);
-
-//    //Ativar e linkar a textura de textura mapeada
-//    glActiveTexture(GL_TEXTURE4);
-//    glBindTexture(GL_TEXTURE_2D, _gTex);
-//    GLint gTexLocation = glGetUniformLocation(_programQuad->programId(), "gTex");
-//    glUniform1i(gTexLocation, 4);
 
     //Ativar e linkar a textura de tangente
     glActiveTexture(GL_TEXTURE0);
@@ -484,18 +450,24 @@ void RenderOpengl::paintGL()
     GLint gTexLocation = glGetUniformLocation(_programQuad->programId(), "gTex");
     glUniform1i(gTexLocation, 4);
 
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, _gDepth);
+    GLint gDepthLocation = glGetUniformLocation(_programQuad->programId(), "gDepth");
+
+    glUniform1i(gDepthLocation, 5);
+
 
     //Bola
     _programQuad->setUniformValue("material.ambient", QVector3D(0.2f,0.2f,0.2f));
     _programQuad->setUniformValue("material.diffuse", QVector3D(0.8f,0.8f,0.8f));
     _programQuad->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
-    _programQuad->setUniformValue("material.shininess", 132.0f);
+    _programQuad->setUniformValue("material.shininess", 100.0f);
 
     //Colocando luzes
 
     setUniformArrays(v);
     //Variáveis de material e luz
-   _programQuad->setUniformValue("lightPos", v * QVector3D(0,0,8)/*QVector3D(0,0,300)*/);
+   _programQuad->setUniformValue("lightPos", v * QVector3D(1.5,1.5,8)/*QVector3D(0,0,300)*/);
 
    _programQuad->setUniformValue("mode",_mode);
    //printf("COORDS: %f %f %f\n",(v * cam.eye).x(),(v * cam.eye).y(),(v * cam.eye).z());
@@ -805,11 +777,6 @@ void RenderOpengl::createFrameBuffer()
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, _gTex, 0);
 
 
-//    unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0,
-//                                    GL_COLOR_ATTACHMENT1,
-//                                    GL_COLOR_ATTACHMENT2,
-//                                    GL_COLOR_ATTACHMENT3};
-//    glDrawBuffers(4, attachments);
     unsigned int attachments[4] = { GL_COLOR_ATTACHMENT0,
                                     GL_COLOR_ATTACHMENT1,
                                     GL_COLOR_ATTACHMENT2,
@@ -848,18 +815,12 @@ void RenderOpengl::updateFrameBuffer()
     glBindTexture(GL_TEXTURE_2D, _gPosition);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
 
-//    //Buffer de Tangente
-//    glBindTexture(GL_TEXTURE_2D, _gTangente);
-//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
-
-    //Buffer de coordenadas de textura do bump
     glBindTexture(GL_TEXTURE_2D, _gTex);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, cam.width , cam.height, 0, GL_RGB, GL_FLOAT, NULL);
 
-//    //Buffer de profundidade
-//    glBindTexture(GL_TEXTURE_2D, _gDepth);
-//    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, cam.width, cam.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
-//                  0);
+    glBindTexture(GL_TEXTURE_2D, _gDepth);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, cam.width, cam.height, 0, GL_DEPTH_COMPONENT, GL_FLOAT,
+                  0);
 }
 
 

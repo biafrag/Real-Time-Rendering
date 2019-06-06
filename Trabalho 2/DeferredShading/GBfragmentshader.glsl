@@ -1,35 +1,30 @@
 #version 410 core
+layout (location = 0) out vec3 gTangente; //Buffer de tangentes
+layout (location = 1) out vec3 gNormal; //Buffer de normais
+layout (location = 2) out vec3 gPosition; // Buffer de posição
+layout (location = 3) out vec3 gTex; //Buffer de textura mapeada pra esfera do bump
 
-//layout (location = 0) out vec3 gPosition;
-//layout (location = 1) out vec3 gNormal;
-//layout (location = 2) out vec3 gTangente;
-//layout (location = 3) out vec3 gTex;
-layout (location = 0) out vec3 gTangente;
-layout (location = 1) out vec3 gNormal;
-layout (location = 2) out vec3 gPosition;
-layout (location = 3) out vec3 gTex;
-//out vec3 finalColor;
 //Variaveis de entrada
-in vec2 fragUV;
-in vec3 fragPos;
-in vec3 fragNormal;
-in vec3 fragTang;
+in vec2 fragUV; //Coordenadas de textura
+in vec3 fragPos; // Posição no espaço do olho
+in vec3 fragNormal; //Normal no espaço do olho
+in vec3 fragTang; //Tangente no espaço do olho
 
-uniform sampler2D normalSampler;
+uniform sampler2D normalSampler; //Textura de bump
+
+vec3 expand(vec3 v)
+{
+   return (v - 0.5) * 2;
+}
 
 void main()
 {
-    // store the fragment position vector in the first gbuffer texture
-   gPosition = fragPos;
+   gPosition = fragPos; //Passando informação de posição para buffer
 
-   gNormal = normalize(fragNormal);
+   gNormal = normalize(fragNormal); //Passando informação de normal para buffer
 
-   gTangente = fragTang;
+   gTangente = normalize(fragTang); //Passando informação de tangente para buffer
 
-   //gTangente = length(gTangente) == 0 ? vec3(1, 0, 0) : vec3(0, 1, 0);
-
-   gTex = normalize(texture(normalSampler,fragUV).rgb);
-
-//   //finalColor = length(gTangente) == 0 ? vec3(1, 0, 0) : vec3(0, 1, 0);
+   gTex = normalize(expand(texture(normalSampler,fragUV).rgb)); //Passando textura de bump já expandida e mapeada para buffer
 
 }
