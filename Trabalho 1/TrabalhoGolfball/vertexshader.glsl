@@ -20,6 +20,7 @@
     out vec3 tanViewer; //Viewer no espaço tangente
     out vec3 tang;
     out vec3 fragNormal;
+    out vec3 fragPos;
 
     void main()
     {
@@ -28,7 +29,7 @@
         gl_Position = mvp * vec4( vertexPos, 1 );
 
         //Posição do vétice no espaço do olho
-        vec3 fragPos = ( mv * vec4( vertexPos, 1 ) ).xyz;
+         fragPos = ( mv * vec4( vertexPos, 1 ) ).xyz;
 
         //Posição da normal no espaço do olho
          fragNormal = normalize(( normalMatrix * vec4( vertexNormal, 0 ) ).xyz);

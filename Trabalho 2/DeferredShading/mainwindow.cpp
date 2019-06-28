@@ -7,7 +7,7 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     QWidget::setFocusPolicy(Qt::FocusPolicy::StrongFocus);
-    ui->radioButton_Result->setChecked(true);
+    ui->radioButton_Bump->setChecked(true);
 }
 
 MainWindow::~MainWindow()

@@ -51,7 +51,7 @@ void main()
     float linear = 0.09;
     float quadratic = 0.0032;
 
-    //Modo pa ver resultado com bump e com luzes coloridas se mexendo
+    //Modo para ver resultado com bump e com luzes coloridas se mexendo
     if(mode == 0)
     {
         //Calculo de espaço tangente
@@ -72,6 +72,7 @@ void main()
 
         finalColor = vec3(0,0,0);
 
+        //Loop para contabilizar todas as luzes
         for(int i = 0; i < 20; i++)
         {
             //Colocando luz no espaco tangente

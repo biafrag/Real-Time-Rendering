@@ -18,19 +18,12 @@
     <item row="0" column="0">
      <layout class="QHBoxLayout" name="horizontalLayout">
       <item>
-       <widget class="QRadioButton" name="radioButton_Result">
-        <property name="text">
-         <string>Result</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QRadioButton" name="radioButton_Bump">
         <property name="text">
          <string>BumpBuffer</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
        </widget>
       </item>
@@ -59,6 +52,16 @@
        <widget class="QRadioButton" name="radioButton_TengentBuffer">
         <property name="text">
          <string>TangentBuffer</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="radioButton_Result">
+        <property name="text">
+         <string>Result</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
         </property>
        </widget>
       </item>

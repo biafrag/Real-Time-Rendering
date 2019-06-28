@@ -2,7 +2,6 @@
 
 layout (location = 5) in vec3 vPos; //Posição dos vértices do quadrilátero
 out vec2 UV; //Coordenadas de textura do quad
-uniform mat4 mvp; //Matriz model view projection
 void main()
 {
 

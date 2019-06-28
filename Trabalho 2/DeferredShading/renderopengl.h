@@ -32,7 +32,7 @@ public:
 
 private:
 
-    int _mode{0};
+    int _mode{5};
     //Classe do qt que permite os shaders serem linkados e usados
     QOpenGLShaderProgram* _programGB{nullptr};
 

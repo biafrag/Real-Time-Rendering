@@ -51,7 +51,7 @@ void RenderOpengl::setFile(std::string fileName)
         organizingData();
         //createSphere();
         computeTangents();
-        printThings();
+       // printThings();
 }
 
 int getIndex( int i, int j, int n )

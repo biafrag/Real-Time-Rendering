@@ -1022,7 +1022,7 @@ void RenderOpengl::createThings()
 
    //Cria vetor com posições iniciais das luzes
    _lights = {
-       QVector3D(0.f, 0.0f, 20.0f),
+       QVector3D(0.f, 0.0f, 8.0f),
        QVector3D(0.f, -15.0f, 20.0f),
        QVector3D(0.f, -45.0f, 20.0f),
        QVector3D(0.f, -75.0f, 20.0f),
