@@ -12,7 +12,7 @@ RenderOpengl::RenderOpengl(QWidget* parent)
     :QOpenGLWidget(parent)
 {
     cam.at = QVector3D(0.0f,0.f,0.f);
-    cam.eye =  QVector3D(0.0f,0.f,2.f);
+    cam.eye =  QVector3D(0.0f,0.f,2.5);
     cam.up = QVector3D(0.f,2.f,0.f);
     cam.zNear = 0.1f;
     cam.zFar  = 100.f;
@@ -60,6 +60,7 @@ void RenderOpengl::initializeGL()
     _program->bind();
 
     createVAO();
+    createTexture("../ProjetoFinalRendering/ocean.jpg");
 
 }
 void RenderOpengl::printThings()
@@ -119,6 +120,12 @@ void RenderOpengl::paintGL()
             _model[2][0],_model[2][1],_model[2][2],_model[2][3],
             _model[3][0],_model[3][1],_model[3][2],_model[3][3]);
 
+    QMatrix4x4 rot;
+    rot.rotate(angle,QVector3D(1,0,0));
+    m = rot*m;
+    QMatrix4x4 trans;
+    trans.translate(0,0.25,0);
+    m = trans*m;
     QMatrix4x4 v = _view;
     QMatrix4x4 p = _proj;
 
@@ -131,22 +138,61 @@ void RenderOpengl::paintGL()
     _program->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
     _program->setUniformValue("material.shininess", 100.0f);
 
-
+    QVector3D posLight = rot * QVector3D(cam.eye.x(),cam.eye.y(),cam.eye.z() + 1);
     //Passando as variáveis uniformes para os shaders
     _program->setUniformValue("mv", mv);
     _program->setUniformValue("mvp", mvp);
     _program->setUniformValue("normalMatrix", mv.inverted().transposed());
     //Variáveis de material e luz
-    _program->setUniformValue("light", /*v * cam.eye */v*QVector3D(5,5,5));
+    _program->setUniformValue("light",posLight /*v * cam.eye /*v*QVector3D(10,10,2)*/);
     _program->setUniformValue("mode",_mode);
     _program->setUniformValue("time",time);
 
+    //Ativar e linkar a textura de tangente
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, _textureID);
+    unsigned int oceanTextureLocation = glGetUniformLocation(_program->programId(), "oceanTex");
+    glUniform1i(oceanTextureLocation, 0);
+
+    _program->setUniformValue("normal",QVector3D(0,0,1));
     glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
     //Desenhando os triângulos que formam o cubo
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexGrid.size()), GL_UNSIGNED_INT, nullptr);
 
     update();
     time += 0.01;
+    if(time == 150)
+    {
+        time = 0;
+    }
+}
+void RenderOpengl::createNormalsGrid()
+{
+    _normalsTest.resize(_pointsTest.size(),QVector3D(0,0,1));
+}
+
+void RenderOpengl::createTexture(const std::string& imagePath)
+{
+    //Gerando textura e recebendo ID dessa textura
+    glGenTextures(1, &_textureID);
+
+    //Linkar (bind) a textura criada
+    glBindTexture(GL_TEXTURE_2D, _textureID);
+
+    //Abrir arquivo de imagem com o Qt
+    QImage texImage = QGLWidget::convertToGLFormat(QImage(imagePath.c_str()));
+    //QImage texImage(imagePath.c_str());
+
+    //Enviar a imagem para o OpenGL
+    glTexImage2D(GL_TEXTURE_2D, 0,GL_RGBA,
+                 texImage.width(), texImage.height(),
+                 0, GL_RGBA, GL_UNSIGNED_BYTE, texImage.bits());
+
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+    glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 void RenderOpengl::createVAO()
@@ -163,10 +209,10 @@ void RenderOpengl::createVAO()
     glEnableVertexAttribArray(0);
 
 
-    //Criando buffer de normais
     glGenBuffers(1, &_normalsBuffer);
+    //Criando buffer de normais
     glBindBuffer(GL_ARRAY_BUFFER, _normalsBuffer);
-    glBufferData(GL_ARRAY_BUFFER, _normals.size()*sizeof(QVector3D), &_normals[0], GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, _normalsTest.size()*sizeof(QVector3D), &_normalsTest[0], GL_STATIC_DRAW);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(1);
 
@@ -194,13 +240,6 @@ void RenderOpengl::createVAO()
     glBufferData(GL_ARRAY_BUFFER, _pointsTest.size()*sizeof(QVector3D), &_pointsTest[0], GL_STATIC_DRAW);
     glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(3);
-
-    //Criando buffer de pontos dos vértices
-    glGenBuffers(1, &_pointsFixedBuffer);
-    glBindBuffer(GL_ARRAY_BUFFER, _pointsFixedBuffer);
-    glBufferData(GL_ARRAY_BUFFER, _pointsTestFixed.size()*sizeof(QVector3D), &_pointsTestFixed[0], GL_STATIC_DRAW);
-    glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glEnableVertexAttribArray(4);
 
 }
 
@@ -346,9 +385,12 @@ void RenderOpengl::createThings()
     {
         while(x <= 1)
         {
-            _pointsTest.push_back(QVector3D(x,y,0));
+            QVector3D point(x,y,0);
+            //QMatrix4x4 rotationMatrix;
+            //rotationMatrix.rotate(120,QVector3D(1,0,0));
+            //point = rotationMatrix*point;
+            _pointsTest.push_back(point);
             x += 0.1;
-            //_indexGrid.push_back(cont);
             cont++;
         }
 
@@ -384,6 +426,7 @@ void RenderOpengl::makeTriangleMesh()
         }
 
     }
+    createNormalsGrid();
 
 }
 

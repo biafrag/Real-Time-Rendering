@@ -27,6 +27,8 @@ uniform vec2 u_resolution;
 uniform vec2 u_mouse;
 uniform float u_time;
 
+uniform sampler2D oceanTex; //Textura de profundidade
+
 float hash1(float n)
 {
     return fract(sin(n) * 1e4);
@@ -103,8 +105,8 @@ void main()
 {
 
         //vec3 colorNoise;
-        vec3 ambient = material.ambient;//texture(sampler, fragUV).rgb; // * light.ambient;
-        vec3 diffuse = vec3(0.0,0.0,0.0);
+        vec3 ambient = material.ambient /** vec3(0.3,0.7,0.8)*/;/**texture(oceanTex,UV).rgb*/;//texture(sampler, fragUV).rgb; // * light.ambient;
+        vec3 diffuse = vec3(0.0,0.0,0.0)*vec3(0,0,1);
         vec3 specular = vec3(0.0,0.0,0.0);
 
         vec3 N = normalize(fragNormal);
@@ -114,13 +116,13 @@ void main()
 
         if( iDif > 0 )
         {
-            diffuse = iDif * material.diffuse;//texture(sampler, fragUV).rgb; // * light.diffuse;
+            diffuse = iDif * material.diffuse /** vec3(0.3,0.7,0.8)*//**texture(oceanTex,UV).rgb*/;//texture(sampler, fragUV).rgb; // * light.diffuse;
 
             vec3 V = normalize(-fragPos);
             vec3 H = normalize(L + V);
 
             float iSpec = pow(max(dot(N,H),0.0),material.shininess);
-            //specular = iSpec * material.specular; // * light.specular;
+            specular = iSpec * material.specular; // * light.specular;
         }
 
 //        //Noise com 6 oitavas
@@ -128,6 +130,6 @@ void main()
 //        vec3 skyColor = vec3(0,0,0.8);
 //        vec3 cloudColor = vec3(0.8,0.8,0.8);
 //        colorNoise = mix(skyColor,cloudColor,f);
-        finalColor = vec4(diffuse + ambient,1);
-        finalColor = vec4(1,0,0,1);
+        finalColor = vec4(diffuse + ambient + specular,1);
+        //finalColor = vec4(1,0,0,1);
 }

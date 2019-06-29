@@ -38,7 +38,7 @@ private:
 
     std::vector<QVector3D> _pointsScreen; //Vetor de cada ponto do meu objeto que será renderizado
     std::vector<QVector3D> _pointsTest;
-    std::vector<QVector3D> _pointsTestFixed;
+    std::vector<QVector3D> _normalsTest;
 
     std::vector<QVector3D> _points; //Vetor de cada ponto do meu objeto que será renderizado
     std::vector<QVector3D> _normals; //Vetor de normal pra cada vértice do meu cubo
@@ -51,6 +51,7 @@ private:
     unsigned int _pointsTestBuffer;
     unsigned int _pointsFixedBuffer;
     unsigned int _pointsScreenBuffer = static_cast<unsigned int>(-1);
+    unsigned int _textureID;
 
    struct Camera {
       QVector3D eye;      /* posicao do olho ou centro de projecao conica */
@@ -68,14 +69,16 @@ private:
 
    QOpenGLVertexArrayObject _vao;
    QOpenGLVertexArrayObject _vao3D;
+   float angle = 150;
 
 private:
     void createVAO(); //Cria VAO
-    void createTexture(const std::string &imagePath); //Seta textura difusa
     void printThings(); //Printa coisas
     void createThings();
     void setMode();
     void makeTriangleMesh();
+    void createNormalsGrid();
+    void createTexture(const std::string& imagePath);
 
     void createVAO3D(); //Cria VAO 3D
     void createSphere();
@@ -90,6 +93,7 @@ private:
     virtual void mouseMoveEvent(QMouseEvent *event);
     virtual void wheelEvent(QWheelEvent *event);
     virtual void keyPressEvent(QKeyEvent* event);
+
     double radius; //Sphere Radius
     QVector3D Points_Sphere(QVector3D pointT);
     int _mode;
