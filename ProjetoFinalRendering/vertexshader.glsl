@@ -55,10 +55,10 @@ void main()
     //Posição do vértice no espaço de projeção
     gl_Position = mvp*vec4( 0.5*vVectorPos, 1 );
 
-    float f = (noise1(4*vertexPos.xy)*0.5 + noise1(8*vertexPos.xy)*0.25 + noise1(16*vertexPos.xy)*0.125 + noise1(32*vertexPos.xy)*0.0625 + noise1(64*vertexPos.xy)*0.03125 + noise1(128*vertexPos.xy)*0.015625);
+    //float f = (noise1(4*vertexPos.xy)*0.5 + noise1(8*vertexPos.xy)*0.25 + noise1(16*vertexPos.xy)*0.125 + noise1(32*vertexPos.xy)*0.0625 + noise1(64*vertexPos.xy)*0.03125 + noise1(128*vertexPos.xy)*0.015625);
     //UV = (vPos.xy + vec2(1,1))/2.0;
-    fragPos =  (mv * vec4( vVectorPos, 1 ) ).xyz;
-    vec3 normal = f * vertexNormal;
+   // fragPos =  (mv * vec4( vVectorPos, 1 ) ).xyz;
+    //vec3 normal = f * vertexNormal;
 
     //Matriz de rotação
 //    vec3 firstCol = vec3()
@@ -66,7 +66,7 @@ void main()
 //    vec3 thirdCol =
 //    mat3 rotationMatrix =
     //Posição da normal no espaço do olho
-    fragNormal = normalize(( normalMatrix * vec4( normal, 0 ) ).xyz);
+    //fragNormal = normalize(( normalMatrix * vec4( normal, 0 ) ).xyz);
     //worldPos = vertexPos;
 
 }

@@ -141,8 +141,9 @@ void RenderOpengl::paintGL()
     _program->setUniformValue("mode",_mode);
     _program->setUniformValue("time",time);
 
+    glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
     //Desenhando os triângulos que formam o cubo
-    glDrawElements(GL_LINES, static_cast<GLsizei>(_indexGrid.size()), GL_UNSIGNED_INT, nullptr);
+    glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexGrid.size()), GL_UNSIGNED_INT, nullptr);
 
     update();
     time += 0.01;
@@ -358,24 +359,29 @@ void RenderOpengl::createThings()
 
 }
 
+unsigned int GetSubgridIndex(int i, int j, int width)
+{
+    return (unsigned int) i*width + j;
+}
+
 void RenderOpengl::makeTriangleMesh()
 {
     int numCols = 20;
     int numRows = 20;
-    for(int i = 0; i < _pointsTest.size() - 2 * numRows + numCols; i++)
+    _indexGrid.clear();
+    for(unsigned int i = 0; i < numRows - 1 ; i++)
     {
-            _indexGrid.push_back(i);
-            _indexGrid.push_back(i + 1);
-            _indexGrid.push_back(i + numCols);
-            _indexGrid.push_back(i);
+        for(unsigned int j = 0; j < numCols - 1; j++)
+        {
 
-            _indexGrid.push_back(i + 1);
-            _indexGrid.push_back(i + 1 + numCols);
-            _indexGrid.push_back(i + numCols);
-            _indexGrid.push_back(i + 1);
+            _indexGrid.push_back(GetSubgridIndex(i,j,numRows));
+            _indexGrid.push_back(GetSubgridIndex(i + 1,j,numRows));
+            _indexGrid.push_back(GetSubgridIndex(i + 1,j + 1,numRows));
 
+            _indexGrid.push_back(GetSubgridIndex(i + 1,j + 1,numRows));
+            _indexGrid.push_back(GetSubgridIndex(i,j + 1,numRows));
+            _indexGrid.push_back(GetSubgridIndex(i,j,numRows));
         }
-
 
     }
 
