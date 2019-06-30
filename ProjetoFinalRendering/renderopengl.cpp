@@ -139,7 +139,9 @@ void RenderOpengl::paintGL()
     _program->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
     _program->setUniformValue("material.shininess", 100.0f);
 
-    QVector3D posLight = rot * QVector3D(cam.eye.x(),cam.eye.y(),cam.eye.z() + 1);
+    QMatrix4x4 rot2;
+    rot2.rotate(-angle,QVector3D(1,0,0));
+    QVector3D posLight = rot2 *v*QVector3D(cam.eye.x(),cam.eye.y() + 1,cam.eye.z() -1);
     //Passando as variáveis uniformes para os shaders
     _program->setUniformValue("mv", mv);
     _program->setUniformValue("mvp", mvp);
