@@ -6,10 +6,35 @@ uniform mat4 normalMatrix; //Inversa transposta da MV
 uniform vec3 normal;
 uniform float time;
 layout (location = 3) in vec3 vVectorPos; //Posição dos vértices do quadrilátero
-out vec2 UV; //Coordenadas de textura do quad
-out vec3 fragPos; //Coordenadas de textura do quad
-out vec3 fragNormal;
-out vec3 worldPos;
+out vec2 geoUV; //Coordenadas de textura do quad
+out vec3 geoPos; //Coordenadas de textura do quad
+out vec3 geoNormal;
+out vec3 pos;
+float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
+vec4 mod289(vec4 x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
+vec4 perm(vec4 x){return mod289(((x * 34.0) + 1.0) * x);}
+float noise(vec3 p){
+    vec3 a = floor(p);
+    vec3 d = p - a;
+    d = d * d * (3.0 - 2.0 * d);
+
+    vec4 b = a.xxyy + vec4(0.0, 1.0, 0.0, 1.0);
+    vec4 k1 = perm(b.xyxy);
+    vec4 k2 = perm(k1.xyxy + b.zzww);
+
+    vec4 c = k2 + a.zzzz;
+    vec4 k3 = perm(c);
+    vec4 k4 = perm(c + 1.0);
+
+    vec4 o1 = fract(k3 * (1.0 / 41.0));
+    vec4 o2 = fract(k4 * (1.0 / 41.0));
+
+    vec4 o3 = o2 * d.z + o1 * (1.0 - d.z);
+    vec2 o4 = o3.yw * d.x + o3.xz * (1.0 - d.x);
+
+    return o4.y * d.y + o4.x * (1.0 - d.y);
+}
+
 float hash1(float n)
 {
     return fract(sin(n) * 1e4);
@@ -67,24 +92,22 @@ float noise1(vec3 x) {
 void main()
 {
     vec3 pos = vec3(vVectorPos.xy,time);
-    float z = (noise1(4*pos)*0.5 + noise1(8*pos)*0.25 + noise1(16*pos)*0.125 + noise1(32*pos)*0.0625 + noise1(64*pos)*0.03125 + noise1(128*pos)*0.015625);
-//    z = sin(z*3.14/2);
+    float z = (noise(4*pos)*0.25 + noise(8*pos)*0.125 /*+ noise(16*pos)*0.125 + noise(32*pos)*0.0625 + noise1(64*pos)*0.03125 + noise(128*pos)*0.015625*/);
+    z = sin(z*3.14/2);
 //    float z = (abs(noise1(8*pos)*0.5 - 0.25)  + abs(noise1(16*pos.xy)*0.25 - 0.125) + abs(noise1(32*pos.xy)*0.125 - 0.0625) + abs(noise1(64*pos.xy)*0.0625 - 0.03125)  );
-//    z = clamp(z * 4 ,0,1);
+    //z = noise(50*pos)*0.5;
 
     //float z = noise1(128* pos);
     //z = 0;
-    vec3 pos2 = vec3(vVectorPos.x,vVectorPos.y,abs(z));
+    vec3 pos2 = vec3(vVectorPos.x,vVectorPos.y,z);
+
     //Posição do vértice no espaço de projeção
     gl_Position = mvp*vec4( pos2, 1 );
 
-    //float f = (noise1(4*vertexPos.xy)*0.5 + noise1(8*vertexPos.xy)*0.25 + noise1(16*vertexPos.xy)*0.125 + noise1(32*vertexPos.xy)*0.0625 + noise1(64*vertexPos.xy)*0.03125 + noise1(128*vertexPos.xy)*0.015625);
-    //UV = (vPos.xy + vec2(1,1))/2.0;
-    fragPos =  (mv * vec4( pos2, 1 ) ).xyz;
-    //vec3 normal = f * vertexNormal;
+    geoPos =  (mv * vec4( pos2, 1 ) ).xyz;
 
     //Posição da normal no espaço do olho
-    fragNormal = normalize(( normalMatrix * vec4( normal, 0 ) ).xyz);
+    geoNormal = normalize(( normalMatrix * vec4( normal, 0 ) ).xyz);
 
-    UV = (vVectorPos.xy + vec2(1,1))/2.0;
+    geoUV = (vVectorPos.xy + vec2(1,1))/2.0;
 }

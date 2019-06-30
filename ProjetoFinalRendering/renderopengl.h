@@ -76,7 +76,7 @@ private:
     void printThings(); //Printa coisas
     void createThings();
     void setMode();
-    void makeTriangleMesh();
+    void makeTriangleMesh(int width, int height);
     void createNormalsGrid();
     void createTexture(const std::string& imagePath);
 

@@ -105,7 +105,7 @@ void main()
 {
 
         //vec3 colorNoise;
-        vec3 ambient = material.ambient /** vec3(0.3,0.7,0.8)*/;/**texture(oceanTex,UV).rgb*/;//texture(sampler, fragUV).rgb; // * light.ambient;
+        vec3 ambient = material.ambient * vec3(0.3,0.7,0.8);/**texture(oceanTex,UV).rgb*/;//texture(sampler, fragUV).rgb; // * light.ambient;
         vec3 diffuse = vec3(0.0,0.0,0.0)*vec3(0,0,1);
         vec3 specular = vec3(0.0,0.0,0.0);
 
@@ -116,7 +116,7 @@ void main()
 
         if( iDif > 0 )
         {
-            diffuse = iDif * material.diffuse /** vec3(0.3,0.7,0.8)*//**texture(oceanTex,UV).rgb*/;//texture(sampler, fragUV).rgb; // * light.diffuse;
+            diffuse = iDif * material.diffuse * vec3(0.3,0.7,0.8)/**texture(oceanTex,UV).rgb*/;//texture(sampler, fragUV).rgb; // * light.diffuse;
 
             vec3 V = normalize(-fragPos);
             vec3 H = normalize(L + V);

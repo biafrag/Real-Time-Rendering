@@ -2,5 +2,6 @@
     <qresource prefix="/shaders">
         <file>fragmentshader.glsl</file>
         <file>vertexshader.glsl</file>
+        <file>geometryshader.glsl</file>
     </qresource>
 </RCC>

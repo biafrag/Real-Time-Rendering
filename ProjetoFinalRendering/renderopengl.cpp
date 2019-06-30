@@ -40,13 +40,14 @@ void RenderOpengl::initializeGL()
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
     glClearColor(0,0,0,1);
-    glPointSize(5);
-    glLineWidth(3);
+    glPointSize(1);
+    glLineWidth(1);
     _program = new QOpenGLShaderProgram();
 
     //Adicionando shaders ao programa
 
     _program->addShaderFromSourceFile(QOpenGLShader::Vertex, ":/shaders/vertexshader.glsl");
+    _program->addShaderFromSourceFile(QOpenGLShader::Geometry, ":/shaders/geometryshader.glsl");
     _program->addShaderFromSourceFile(QOpenGLShader::Fragment, ":/shaders/fragmentshader.glsl");
 
     //Linka shaders que foram adicionados ao programa
@@ -160,8 +161,8 @@ void RenderOpengl::paintGL()
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexGrid.size()), GL_UNSIGNED_INT, nullptr);
 
     update();
-    time += 0.01;
-    if(time == 150)
+    time += 0.001;
+    if(time == 1)
     {
         time = 0;
     }
@@ -365,6 +366,16 @@ void RenderOpengl::mouseMoveEvent(QMouseEvent *event)
 
 void RenderOpengl::wheelEvent(QWheelEvent *event)
 {
+    //Aqui o zoom
+      if(event->delta() > 0) //Quer dizer que estou rolando para cima-> zoom in
+      {
+         cam.eye=cam.eye*0.8;
+      }
+      else if(event->delta() < 0) //Quer dizer que estou rolando para baixo-> zoom out
+      {
+           cam.eye=cam.eye/0.8;
+      }
+      update();
 }
 
 void RenderOpengl::createThings()
@@ -380,7 +391,8 @@ void RenderOpengl::createThings()
    };
     float x = -1;
     float y = 1;
-    int cont = 0;
+    int width = 0;
+    int height = 0;
     while(y >= -1)
     {
         while(x <= 1)
@@ -390,14 +402,17 @@ void RenderOpengl::createThings()
             //rotationMatrix.rotate(120,QVector3D(1,0,0));
             //point = rotationMatrix*point;
             _pointsTest.push_back(point);
-            x += 0.1;
-            cont++;
+            x += 0.001;
+            width++;
         }
-
+        //width = 0;
         x = -1;
-        y -= 0.1;
+        y -= 0.001;
+        height++;
     }
-    makeTriangleMesh();
+    width = width/height;
+    makeTriangleMesh(width,height);
+    printf("width: %d, height: %d",width,height);
 
 }
 
@@ -406,23 +421,23 @@ unsigned int GetSubgridIndex(int i, int j, int width)
     return (unsigned int) i*width + j;
 }
 
-void RenderOpengl::makeTriangleMesh()
+void RenderOpengl::makeTriangleMesh(int width, int height)
 {
-    int numCols = 20;
-    int numRows = 20;
+    int numCols = width;
+    int numRows = height;
     _indexGrid.clear();
     for(unsigned int i = 0; i < numRows - 1 ; i++)
     {
         for(unsigned int j = 0; j < numCols - 1; j++)
         {
 
-            _indexGrid.push_back(GetSubgridIndex(i,j,numRows));
-            _indexGrid.push_back(GetSubgridIndex(i + 1,j,numRows));
-            _indexGrid.push_back(GetSubgridIndex(i + 1,j + 1,numRows));
+            _indexGrid.push_back(GetSubgridIndex(i,j,numCols));
+            _indexGrid.push_back(GetSubgridIndex(i + 1,j,numCols));
+            _indexGrid.push_back(GetSubgridIndex(i + 1,j + 1,numCols));
 
-            _indexGrid.push_back(GetSubgridIndex(i + 1,j + 1,numRows));
-            _indexGrid.push_back(GetSubgridIndex(i,j + 1,numRows));
-            _indexGrid.push_back(GetSubgridIndex(i,j,numRows));
+            _indexGrid.push_back(GetSubgridIndex(i + 1,j + 1,numCols));
+            _indexGrid.push_back(GetSubgridIndex(i,j + 1,numCols));
+            _indexGrid.push_back(GetSubgridIndex(i,j,numCols));
         }
 
     }
