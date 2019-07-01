@@ -12,7 +12,7 @@ RenderOpengl::RenderOpengl(QWidget* parent)
     :QOpenGLWidget(parent)
 {
     cam.at = QVector3D(0.0f,0.f,0.f);
-    cam.eye =  QVector3D(0.0f,0.f,2.5);
+    cam.eye =  QVector3D(0.0f,0.f,3);
     cam.up = QVector3D(0.f,2.f,0.f);
     cam.zNear = 0.1f;
     cam.zFar  = 100.f;
@@ -126,7 +126,7 @@ void RenderOpengl::paintGL()
     m = rot*m;
     QMatrix4x4 trans;
     trans.translate(0,0.25,0);
-    m = trans*m;
+    //m = trans*m;
     QMatrix4x4 v = _view;
     QMatrix4x4 p = _proj;
 
@@ -137,17 +137,17 @@ void RenderOpengl::paintGL()
     _program->setUniformValue("material.ambient", QVector3D(0.2f,0.2f,0.2f));
     _program->setUniformValue("material.diffuse", QVector3D(0.8f,0.8f,0.8f));
     _program->setUniformValue("material.specular", QVector3D(1.0f,1.0f,1.0f));
-    _program->setUniformValue("material.shininess", 100.0f);
+    _program->setUniformValue("material.shininess", 2000.0f);
 
-    QMatrix4x4 rot2;
-    rot2.rotate(-angle,QVector3D(1,0,0));
-    QVector3D posLight = rot2 *v*QVector3D(cam.eye.x(),cam.eye.y() + 1,cam.eye.z() -1);
+   // QMatrix4x4 rot1;
+    //rot1.rotate(-angle,QVector3D(1,0,0));
+    //QVector3D posLight = rot1 *QVector3D(cam.eye.x(),cam.eye.y(),cam.eye.z());
     //Passando as variáveis uniformes para os shaders
     _program->setUniformValue("mv", mv);
     _program->setUniformValue("mvp", mvp);
     _program->setUniformValue("normalMatrix", mv.inverted().transposed());
     //Variáveis de material e luz
-    _program->setUniformValue("light",posLight /*v * cam.eye /*v*QVector3D(10,10,2)*/);
+    _program->setUniformValue("light",v*QVector3D(0,10,-5) /*v * cam.eye /*v*QVector3D(10,10,2)*/);
     _program->setUniformValue("mode",_mode);
     _program->setUniformValue("time",time);
 
@@ -163,11 +163,13 @@ void RenderOpengl::paintGL()
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexGrid.size()), GL_UNSIGNED_INT, nullptr);
 
     update();
-    time += 0.001;
-    if(time == 1)
+    cont += 0.002;
+    if(cont == 1)
     {
-        time = 0;
+        cont = 0;
     }
+    time = glm::cos(3.14*cont);
+
 }
 void RenderOpengl::createNormalsGrid()
 {
@@ -574,4 +576,9 @@ void RenderOpengl::createSphere()
 void RenderOpengl::setMode(int mode)
 {
     _mode = mode;
+}
+
+void RenderOpengl::setOctaves(int octave)
+{
+    _octaves = octave;
 }

@@ -120,8 +120,8 @@ void main()
 
             vec3 V = normalize(-fragPos);
             vec3 H = normalize(L + V);
-
-            float iSpec = pow(max(dot(N,H),0.0),material.shininess);
+            vec3 r = normalize(reflect(-L, N));
+            float iSpec = pow(max(dot(V,r),0.0),material.shininess);
             specular = iSpec * material.specular; // * light.specular;
         }
 

@@ -29,6 +29,7 @@ public:
     void paintGL() override;
     void setFile(std::string fileName);
     void setMode(int mode);
+    void setOctaves(int octave);
 
 private:
 
@@ -69,7 +70,8 @@ private:
 
    QOpenGLVertexArrayObject _vao;
    QOpenGLVertexArrayObject _vao3D;
-   float angle = 150;
+   float angle = 120;
+   int _octaves{2};
 
 private:
     void createVAO(); //Cria VAO
@@ -84,6 +86,7 @@ private:
     void createSphere();
     void quadToTriangleMesh(std::vector<int> &indexPointsQuad, std::vector<int> &indexPointsTriangle, std::vector<int> &indexNormalsTriangles, std::vector<int> &indexTexTriangles, std::vector<int> &indexNormalsQuad, std::vector<int> &indexTexQuad); //Transforma malha de quads em malha de triângulos
     float time{0};
+    float cont{0};
     //Arcball
     bool mousepress;
     QVector3D p0,p1; //pontos para fazer rotação

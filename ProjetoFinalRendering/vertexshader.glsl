@@ -91,15 +91,17 @@ float noise1(vec3 x) {
 }
 void main()
 {
-    vec3 pos = vec3(vVectorPos.xy,time);
-    float z = (noise(4*pos)*0.25 + noise(8*pos)*0.125 /*+ noise(16*pos)*0.125 + noise(32*pos)*0.0625 + noise1(64*pos)*0.03125 + noise(128*pos)*0.015625*/);
-    z = sin(z*3.14/2);
-//    float z = (abs(noise1(8*pos)*0.5 - 0.25)  + abs(noise1(16*pos.xy)*0.25 - 0.125) + abs(noise1(32*pos.xy)*0.125 - 0.0625) + abs(noise1(64*pos.xy)*0.0625 - 0.03125)  );
+    vec3 pos = vec3(vVectorPos.xy,0);
+    //vec2 pos = vec2(vVectorPos.xy);
+    float z = (noise1(4*pos)*0.25 + noise1(8*pos)*0.125 /*+ noise(16*pos)*0.125 + noise(32*pos)*0.0625 + noise1(64*pos)*0.03125 + noise(128*pos)*0.015625*/);
+    //z = sin(z*3.14/2);
+
+    //float z = (abs(noise1(8*pos)*0.5 - 0.25)  + abs(noise1(16*pos.xy)*0.25 - 0.125) + abs(noise1(32*pos.xy)*0.125 - 0.0625) + abs(noise1(64*pos.xy)*0.0625 - 0.03125)  );
     //z = noise(50*pos)*0.5;
 
     //float z = noise1(128* pos);
     //z = 0;
-    vec3 pos2 = vec3(vVectorPos.x,vVectorPos.y,z);
+    vec3 pos2 = vec3(vVectorPos.x,vVectorPos.y,0.5*z);
 
     //Posição do vértice no espaço de projeção
     gl_Position = mvp*vec4( pos2, 1 );
