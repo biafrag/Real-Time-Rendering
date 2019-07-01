@@ -5,6 +5,8 @@ uniform mat4 mv; // Matriz model view
 uniform mat4 normalMatrix; //Inversa transposta da MV
 uniform vec3 normal;
 uniform float time;
+uniform int numOctaves;
+uniform bool animation;
 layout (location = 3) in vec3 vVectorPos; //Posição dos vértices do quadrilátero
 out vec2 geoUV; //Coordenadas de textura do quad
 out vec3 geoPos; //Coordenadas de textura do quad
@@ -91,11 +93,28 @@ float noise1(vec3 x) {
 }
 void main()
 {
-    vec3 pos = vec3(vVectorPos.xy,0);
+    vec3 pos = vec3(vVectorPos.x,vVectorPos.y - time,0);
     //vec2 pos = vec2(vVectorPos.xy);
-    float z = (noise1(4*pos)*0.25 + noise1(8*pos)*0.125 /*+ noise(16*pos)*0.125 + noise(32*pos)*0.0625 + noise1(64*pos)*0.03125 + noise(128*pos)*0.015625*/);
+    //float z = (noise1(4*pos)*0.25 + noise1(8*pos)*0.125 /*+ noise(16*pos)*0.125 + noise(32*pos)*0.0625 + noise1(64*pos)*0.03125 + noise(128*pos)*0.015625*/);
     //z = sin(z*3.14/2);
 
+    if(animation)
+    {
+        pos.z = time;
+    }
+    else
+    {
+        pos.z = 0;
+    }
+    float z = 0;
+    int scale = 4;
+    float proportion = 0.25;
+    for(int i = 0; i < numOctaves;i++)
+    {
+        z += noise1(scale*pos)*proportion;
+        scale*=2;
+        proportion/=2;
+    }
     //float z = (abs(noise1(8*pos)*0.5 - 0.25)  + abs(noise1(16*pos.xy)*0.25 - 0.125) + abs(noise1(32*pos.xy)*0.125 - 0.0625) + abs(noise1(64*pos.xy)*0.0625 - 0.03125)  );
     //z = noise(50*pos)*0.5;
 

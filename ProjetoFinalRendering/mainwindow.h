@@ -18,6 +18,8 @@ public:
 private slots:
     void on_spinBoxOctaves_valueChanged(int arg1);
 
+    void on_pushButton_clicked();
+
 private:
     Ui::MainWindow *ui;
 };

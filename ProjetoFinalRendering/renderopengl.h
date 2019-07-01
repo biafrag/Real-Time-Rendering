@@ -30,6 +30,7 @@ public:
     void setFile(std::string fileName);
     void setMode(int mode);
     void setOctaves(int octave);
+    void changeAnimationStatus();
 
 private:
 
@@ -72,6 +73,7 @@ private:
    QOpenGLVertexArrayObject _vao3D;
    float angle = 120;
    int _octaves{2};
+   bool _animation{false};
 
 private:
     void createVAO(); //Cria VAO

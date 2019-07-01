@@ -149,6 +149,8 @@ void RenderOpengl::paintGL()
     //Variáveis de material e luz
     _program->setUniformValue("light",v*QVector3D(0,10,-5) /*v * cam.eye /*v*QVector3D(10,10,2)*/);
     _program->setUniformValue("mode",_mode);
+    _program->setUniformValue("numOctaves",_octaves);
+    _program->setUniformValue("animation",_animation);
     _program->setUniformValue("time",time);
 
     //Ativar e linkar a textura de tangente
@@ -163,12 +165,13 @@ void RenderOpengl::paintGL()
     glDrawElements(GL_TRIANGLES, static_cast<GLsizei>(_indexGrid.size()), GL_UNSIGNED_INT, nullptr);
 
     update();
-    cont += 0.002;
-    if(cont == 1)
-    {
-        cont = 0;
-    }
-    time = glm::cos(3.14*cont);
+//    cont += 0.002;
+//    if(cont == 1)
+//    {
+//        cont = 0;
+//    }
+//    time = glm::cos(3.14*cont);
+    time +=0.01;
 
 }
 void RenderOpengl::createNormalsGrid()
@@ -397,24 +400,26 @@ void RenderOpengl::createThings()
     float y = 1;
     int width = 0;
     int height = 0;
+    _pointsTest.clear();
     while(y >= -1)
     {
         while(x <= 1)
         {
             QVector3D point(x,y,0);
-            //QMatrix4x4 rotationMatrix;
-            //rotationMatrix.rotate(120,QVector3D(1,0,0));
-            //point = rotationMatrix*point;
             _pointsTest.push_back(point);
             x += 0.001;
             width++;
         }
-        //width = 0;
-        x = -1;
         y -= 0.001;
+        if(y<-1)
+        {
+            break;
+        }
+        width = 0;
+        x = -1;
         height++;
     }
-    width = width/height;
+    //width = width/height;
     makeTriangleMesh(width,height);
     printf("width: %d, height: %d",width,height);
 
@@ -442,10 +447,14 @@ void RenderOpengl::makeTriangleMesh(int width, int height)
             _indexGrid.push_back(GetSubgridIndex(i + 1,j + 1,numCols));
             _indexGrid.push_back(GetSubgridIndex(i,j + 1,numCols));
             _indexGrid.push_back(GetSubgridIndex(i,j,numCols));
+            if(j == 2998 && i == 1798)
+            {
+                printf("blah");
+            }
         }
 
     }
-    createNormalsGrid();
+    //createNormalsGrid();
 
 }
 
@@ -581,4 +590,9 @@ void RenderOpengl::setMode(int mode)
 void RenderOpengl::setOctaves(int octave)
 {
     _octaves = octave;
+}
+
+void RenderOpengl::changeAnimationStatus()
+{
+    _animation = !_animation;
 }
